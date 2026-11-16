@@ -140,6 +140,12 @@ const App = {
       pageSelect.value = this.state.currentPage;
     }
 
+    const topBadge = document.getElementById('top-current-page-badge');
+    const sidebarBadge = document.getElementById('sidebar-current-page-badge');
+    const pageLabel = `পৃষ্ঠা ${this.state.currentPage} / ${this.state.totalPages}`;
+    if (topBadge) topBadge.textContent = pageLabel;
+    if (sidebarBadge) sidebarBadge.textContent = pageLabel;
+
     const indexView = document.getElementById('view-index-page');
     const ledgerView = document.getElementById('view-ledger-page');
     const allRecordsView = document.getElementById('view-all-records');
@@ -834,6 +840,10 @@ const App = {
         this.state.pageData.items
       );
     }
+  },
+
+  printMasterIndex() {
+    PrintManager.printMasterIndex(this.state.categories);
   },
 
   closeModal(modalId) {

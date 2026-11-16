@@ -4,6 +4,13 @@ import socket
 import io
 import base64
 import csv
+
+# Windows UTF-8 stdout fix
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+if hasattr(sys.stderr, 'reconfigure'):
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+
 from flask import Flask, request, jsonify, send_from_directory, Response
 import database as db
 import qrcode

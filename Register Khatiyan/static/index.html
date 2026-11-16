@@ -32,12 +32,13 @@
   <div id="sidebar-backdrop" onclick="App.closeSidebar()" class="hidden fixed inset-0 bg-black/60 z-40 lg:hidden backdrop-blur-xs transition-opacity"></div>
 
   <!-- ========================================== -->
-  <!-- LEFT SIDEBAR (হলুদ মার্ক করা মেন্যুসমূহ) -->
   <!-- ========================================== -->
-  <aside id="app-sidebar" class="no-print fixed lg:sticky top-0 left-0 z-50 h-screen w-64 bg-teal-950 text-white flex flex-col justify-between border-r-2 border-teal-800 shadow-2xl transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out shrink-0">
+  <!-- LEFT SIDEBAR                               -->
+  <!-- ========================================== -->
+  <aside id="app-sidebar" class="no-print fixed lg:sticky top-0 left-0 z-50 h-screen w-64 bg-teal-950 text-white flex flex-col justify-between border-r-2 border-teal-800 shadow-2xl transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out shrink-0 overflow-y-auto">
     
     <div>
-      <!-- Logo & Title -->
+      <!-- 1. Logo & Title -->
       <div class="p-4 sm:p-5 border-b border-teal-800/80 flex items-center justify-between">
         <div class="flex items-center gap-3 cursor-pointer" onclick="App.goToPage(1); App.closeSidebar();">
           <div class="w-10 h-10 rounded-xl bg-teal-800 border border-teal-600 flex items-center justify-center text-2xl shadow-inner">
@@ -59,7 +60,7 @@
         </button>
       </div>
 
-      <!-- Prominent "+ নতুন এন্ট্রি" Button -->
+      <!-- 2. Prominent "+ নতুন এন্ট্রি" Button -->
       <div class="p-3.5 pb-2">
         <button onclick="App.openNewEntryModal(); App.closeSidebar();" class="w-full bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-teal-950 font-black py-3 px-4 rounded-xl text-sm sm:text-base shadow-lg hover:shadow-xl transition flex items-center justify-center gap-2 transform active:scale-95 cursor-pointer">
           <span class="text-xl font-black">+</span>
@@ -67,42 +68,57 @@
         </button>
       </div>
 
-      <!-- Navigation Menu Items (হলুদ চিহ্নিত মেনুসমূহ) -->
-      <nav class="px-3 py-2 space-y-1.5 text-sm font-semibold">
+      <!-- 3. শুধু Left Arrow ও Right Arrow (কোনো টেক্সট ছাড়া) -->
+      <div class="flex items-center justify-between gap-3 px-3 py-2 mx-3 my-2 bg-teal-900/80 rounded-xl border border-teal-700/80 shadow-inner">
+        <button type="button" onclick="App.prevPage()" class="flex-1 py-2 bg-teal-800 hover:bg-teal-700 text-teal-200 hover:text-white rounded-lg transition font-black text-center text-xl flex items-center justify-center border border-teal-600 cursor-pointer shadow-xs active:scale-95" title="আগের পৃষ্ঠা">
+          ◀
+        </button>
+        <button type="button" onclick="App.nextPage()" class="flex-1 py-2 bg-teal-800 hover:bg-teal-700 text-teal-200 hover:text-white rounded-lg transition font-black text-center text-xl flex items-center justify-center border border-teal-600 cursor-pointer shadow-xs active:scale-95" title="পরের পৃষ্ঠা">
+          ▶
+        </button>
+      </div>
+
+      <!-- 4. Navigation Menu Items -->
+      <nav class="px-3 py-1 space-y-1 text-sm font-semibold">
         
-        <!-- 1. সূচিপত্র -->
+        <!-- ১. ১ম পৃষ্ঠা: সূচিপত্র -->
         <button onclick="App.goToPage(1); App.closeSidebar();" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-teal-900 text-teal-100 hover:text-white transition text-left group cursor-pointer">
           <span class="text-xl">📖</span>
           <span class="flex-1 font-bold">১ম পৃষ্ঠা: সূচিপত্র</span>
           <span class="text-2xs bg-teal-900 group-hover:bg-teal-800 text-amber-300 px-2 py-0.5 rounded-full font-bold">ইনডেক্স</span>
         </button>
 
-        <!-- 2. সকল মালামালের তালিকা -->
+        <!-- ২. নতুন মাদার ক্যাটাগরি তৈরি বাটন -->
+        <button onclick="App.openCategoryModal(); App.closeSidebar();" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-teal-900 text-emerald-300 hover:text-white transition text-left cursor-pointer">
+          <span class="text-xl">➕</span>
+          <span class="flex-1 font-bold">নতুন মাদার ক্যাটাগরি</span>
+        </button>
+
+        <!-- ৩. সূচিপত্র প্রিন্ট বাটন -->
+        <button onclick="App.printMasterIndex(); App.closeSidebar();" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-teal-900 text-teal-100 hover:text-white transition text-left cursor-pointer">
+          <span class="text-xl">🖨️</span>
+          <span class="flex-1 font-bold">সূচিপত্র প্রিন্ট</span>
+        </button>
+
+        <!-- ৪. সকল মালামালের তালিকা -->
         <button onclick="App.toggleAllRecordsView(); App.closeSidebar();" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-teal-900 text-teal-100 hover:text-white transition text-left cursor-pointer">
           <span class="text-xl">📋</span>
           <span class="flex-1 font-bold">সকল মালামালের তালিকা</span>
         </button>
 
-        <!-- 3. মোবাইল কানেক্ট (QR) -->
-        <button onclick="App.openMobileConnectModal(); App.closeSidebar();" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-teal-900 text-teal-100 hover:text-white transition text-left cursor-pointer">
-          <span class="text-xl">📱</span>
-          <span class="flex-1 font-bold">মোবাইল কানেক্ট</span>
-          <span class="text-2xs bg-emerald-700 text-white px-2 py-0.5 rounded-full font-bold">QR কোড</span>
-        </button>
-
-        <!-- 4. প্রিন্ট খাতা -->
+        <!-- ৫. খাতা প্রিন্ট করুন (চলতি পৃষ্ঠা) -->
         <button onclick="App.printCurrentView(); App.closeSidebar();" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-teal-900 text-teal-100 hover:text-white transition text-left cursor-pointer">
-          <span class="text-xl">🖨️</span>
-          <span class="flex-1 font-bold">খাতা প্রিন্ট করুন</span>
+          <span class="text-xl">📄</span>
+          <span class="flex-1 font-bold">চলতি পৃষ্ঠা প্রিন্ট</span>
         </button>
 
-        <!-- 5. ব্যাকআপ ও এক্সপোর্ট -->
+        <!-- ৬. ব্যাকআপ ও এক্সপোর্ট -->
         <button onclick="App.openBackupModal(); App.closeSidebar();" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-teal-900 text-teal-100 hover:text-white transition text-left cursor-pointer">
           <span class="text-xl">💾</span>
           <span class="flex-1 font-bold">ব্যাকআপ ও এক্সপোর্ট</span>
         </button>
 
-        <!-- 6. ইনস্টল অ্যাপ (PWA) -->
+        <!-- ৭. ইনস্টল অ্যাপ (PWA) -->
         <button id="btn-install-pwa" onclick="App.promptInstallPWA(); App.closeSidebar();" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-white transition text-left cursor-pointer">
           <span class="text-xl">📲</span>
           <span class="flex-1 font-bold">অ্যাপ ইনস্টল করুন</span>
@@ -111,16 +127,16 @@
       </nav>
     </div>
 
-    <!-- Sidebar Footer / Status Info -->
+    <!-- Sidebar Footer -->
     <div class="p-4 border-t border-teal-900 bg-teal-950/90 text-xs text-teal-300">
       <div class="flex justify-between items-center mb-1">
         <span>খাতা ধারণক্ষমতা:</span>
         <span class="font-bold text-white">২৫০ পৃষ্ঠা</span>
       </div>
       <div class="flex justify-between items-center">
-        <span>সার্ভার স্ট্যাটাস:</span>
+        <span>ডাটাবেজ স্ট্যাটাস:</span>
         <span class="font-bold text-emerald-400 flex items-center gap-1">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse"></span> অনলাইন লাইভ
+          <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse"></span> সক্রিয়
         </span>
       </div>
     </div>
@@ -132,20 +148,25 @@
   <!-- ========================================== -->
   <div class="flex-1 flex flex-col min-w-0 min-h-screen">
 
-    <!-- TOP HEADER / NAVIGATION (বড় সার্চ বক্স ও পেজ সিলেক্টর) -->
+    <!-- TOP HEADER / NAVIGATION -->
     <header id="app-header" class="no-print bg-teal-900 text-white shadow-md sticky top-0 z-30 px-3 sm:px-6 py-2.5 border-b border-teal-800">
       <div class="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-4">
         
         <!-- Left: Menu toggle button -->
-        <div class="flex items-center gap-2 shrink-0">
+        <div class="flex items-center gap-2.5 shrink-0">
           <button onclick="App.toggleSidebar()" class="p-2 rounded-xl bg-teal-800 hover:bg-teal-700 text-white transition shadow-sm flex items-center gap-1.5 cursor-pointer" title="মেন্যু খুলুন / বন্ধ করুন">
             <span class="text-xl leading-none font-bold">☰</span>
             <span class="text-xs font-bold hidden sm:inline">মেন্যু</span>
           </button>
+          
+          <div class="hidden sm:block">
+            <h2 class="text-sm font-bold text-white leading-tight">ডিজিটাল খতিয়ান</h2>
+            <p class="text-2xs text-teal-200">মালামাল ক্রয় রেজিস্টার</p>
+          </div>
         </div>
 
-        <!-- Center: BIG, WIDE, HIGH-CONTRAST SEARCH BOX (লাল মার্ক করা বড় সার্চ বক্স) -->
-        <div class="flex-1 max-w-2xl mx-1 sm:mx-3">
+        <!-- Center: BIG, WIDE, HIGH-CONTRAST SEARCH BOX -->
+        <div class="flex-1 max-w-2xl mx-1 sm:mx-4">
           <div class="relative w-full">
             <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-teal-700 pointer-events-none text-lg">
               🔍
@@ -168,16 +189,15 @@
           </div>
         </div>
 
-        <!-- Right: Page Selector Dropdown with Prev/Next buttons -->
-        <div class="flex items-center gap-1 bg-teal-950 px-2 py-1 rounded-xl border border-teal-700 shadow-inner shrink-0">
-          <button type="button" onclick="App.prevPage()" class="p-1 sm:px-1.5 text-teal-300 hover:text-white hover:bg-teal-800 rounded transition text-xs font-bold cursor-pointer" title="আগের পৃষ্ঠা">
+        <!-- Right: Current Page Quick Indicator & Quick Flip -->
+        <div class="flex items-center gap-1.5 bg-teal-950 px-3 py-1.5 rounded-xl border border-teal-700 shadow-inner shrink-0">
+          <button type="button" onclick="App.prevPage()" class="p-1 text-teal-300 hover:text-white hover:bg-teal-800 rounded transition text-xs font-bold cursor-pointer" title="আগের পৃষ্ঠা">
             ◀
           </button>
-          <span class="text-xs text-amber-300 font-bold hidden md:inline">পৃষ্ঠা:</span>
-          <select id="top-page-selector" class="bg-teal-900 text-white border border-teal-600/70 rounded-lg text-xs sm:text-sm font-bold focus:outline-none focus:ring-1 focus:ring-amber-400 cursor-pointer px-1.5 py-1 max-w-[120px] sm:max-w-[200px]">
-            <!-- Dynamically populated 1 to 250 with Mother Category labels -->
-          </select>
-          <button type="button" onclick="App.nextPage()" class="p-1 sm:px-1.5 text-teal-300 hover:text-white hover:bg-teal-800 rounded transition text-xs font-bold cursor-pointer" title="পরের পৃষ্ঠা">
+          <span id="top-current-page-badge" class="text-xs font-extrabold text-amber-300 whitespace-nowrap">
+            পৃষ্ঠা ১ / ২৫০
+          </span>
+          <button type="button" onclick="App.nextPage()" class="p-1 text-teal-300 hover:text-white hover:bg-teal-800 rounded transition text-xs font-bold cursor-pointer" title="পরের পৃষ্ঠা">
             ▶
           </button>
         </div>
@@ -188,8 +208,8 @@
   <!-- MAIN APP CONTAINER -->
   <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 lg:p-8 no-print pb-24 sm:pb-8">
 
-    <!-- OVERVIEW STATS BAR -->
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
+    <!-- OVERVIEW STATS BAR (৩ কলামে সুন্দরভাবে বিন্যস্ত) -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6">
       <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80 flex items-center justify-between">
         <div>
           <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">সর্বমোট ক্রয় ব্যয়</p>
@@ -213,46 +233,13 @@
         </div>
         <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center text-xl">📄</div>
       </div>
-
-      <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition" onclick="App.goToPage(1)">
-        <div>
-          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">১ম পৃষ্ঠা: সূচিপত্র</p>
-          <h3 class="text-sm sm:text-base font-bold text-teal-700 mt-1 flex items-center gap-1">
-            মাদার ইনডেক্স ➔
-          </h3>
-        </div>
-        <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center text-xl">📑</div>
-      </div>
     </div>
 
     <!-- ========================================== -->
     <!-- VIEW 1: PAGE 1 - সূচিপত্র (MASTER INDEX)   -->
     <!-- ========================================== -->
-    <div id="view-index-page" class="space-y-6">
+    <div id="view-index-page" class="space-y-4">
       
-      <!-- Khata Cover / Header Banner -->
-      <div class="bg-gradient-to-r from-teal-900 via-teal-800 to-teal-950 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden border-b-4 border-amber-400">
-        <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-700/60 text-amber-300 text-xs font-bold mb-2">
-              <span>📖</span> খাতার ১ম পৃষ্ঠা: সূচিপত্র (Table of Contents)
-            </div>
-            <h2 class="text-2xl sm:text-3xl font-extrabold tracking-wide">মালামাল ক্রয় রেজিস্টার খাতা</h2>
-            <p class="text-teal-200 text-sm mt-1 max-w-2xl">
-              প্রতিটি পণ্য কেনার পর তার নির্ধারিত মাদার ইনডেক্স পেজে এন্ট্রি রাখা হয়। নিচে নির্দিষ্ট ক্যাটাগরিতে ক্লিক করে সেই পৃষ্ঠা সরাসরি খুলুন।
-            </p>
-          </div>
-          <div class="flex flex-wrap items-center gap-3">
-            <button onclick="App.openCategoryModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-xl text-sm shadow transition flex items-center gap-2">
-              <span>➕</span> নতুন মাদার ক্যাটাগরি
-            </button>
-            <button onclick="App.printCurrentView()" class="bg-teal-700/80 hover:bg-teal-700 text-teal-100 font-semibold px-4 py-2 rounded-xl text-sm border border-teal-500/50 transition flex items-center gap-2">
-              <span>🖨️</span> সূচিপত্র প্রিন্ট
-            </button>
-          </div>
-        </div>
-      </div>
-
       <!-- Desktop Table View of Master Index -->
       <div class="hidden sm:block bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
         <table class="table-index w-full">
@@ -646,53 +633,7 @@
     </div>
   </div>
 
-  <!-- ========================================== -->
-  <!-- MODAL 3: MOBILE CONNECT & QR CODE          -->
-  <!-- ========================================== -->
-  <div id="modal-mobile-connect" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto no-print">
-    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 text-center relative my-8">
-      
-      <button onclick="App.closeModal('modal-mobile-connect')" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center font-bold">
-        ✕
-      </button>
 
-      <div class="w-12 h-12 rounded-2xl bg-teal-100 text-teal-800 flex items-center justify-center text-2xl mx-auto mb-3">
-        📱
-      </div>
-
-      <h3 class="text-xl font-bold text-slate-800">মোবাইল থেকে রেজিস্টার খাতা খুলুন</h3>
-      <p class="text-xs text-slate-500 mt-1 max-w-xs mx-auto">
-        আপনার মোবাইল ক্যামেরা দিয়ে নিচের QR কোডটি স্ক্যান করুন অথবা একই ওয়াইফাই-তে যুক্ত হয়ে লিংকটি খুলুন।
-      </p>
-
-      <!-- QR Code Image -->
-      <div class="my-4 p-3 bg-slate-50 rounded-2xl border border-slate-200 inline-block shadow-inner">
-        <img id="qr-code-image" src="" alt="QR Code" class="w-48 h-48 mx-auto object-contain">
-      </div>
-
-      <!-- URL link & Copy Button -->
-      <div class="bg-slate-100 p-2.5 rounded-xl border border-slate-300 flex items-center justify-between gap-2 text-left mb-4">
-        <a id="mobile-url-text" href="#" target="_blank" class="text-xs font-mono font-bold text-teal-800 truncate hover:underline">
-          http://...
-        </a>
-        <button onclick="App.copyMobileUrl()" class="px-3 py-1 bg-teal-700 hover:bg-teal-800 text-white rounded-lg text-xs font-bold whitespace-nowrap shadow-xs">
-          কপি লিংক
-        </button>
-      </div>
-
-      <!-- How to Install PWA on Phone Guide -->
-      <div class="text-left bg-amber-50/70 p-3.5 rounded-xl border border-amber-200 text-xs text-amber-950 space-y-1.5">
-        <strong class="block text-teal-950 font-bold mb-1">📲 মোবাইলে অ্যাপ হিসেবে ইনস্টল করার নিয়ম:</strong>
-        <p><strong>Android Chrome:</strong> মেন্যু (⋮) বাটনে ট্যাপ করে <em>"Add to Home screen"</em> বা <em>"Install app"</em> সিলেক্ট করুন।</p>
-        <p><strong>iPhone Safari:</strong> নিচে শেয়ার (Share ⎋) বাটনে ট্যাপ করে <em>"Add to Home Screen"</em> সিলেক্ট করুন।</p>
-      </div>
-
-      <button onclick="App.closeModal('modal-mobile-connect')" class="mt-4 w-full py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl text-sm transition">
-        ঠিক আছে
-      </button>
-
-    </div>
-  </div>
 
   <!-- ========================================== -->
   <!-- MODAL 4: BACKUP & RESTORE                  -->
@@ -768,9 +709,9 @@
       <span class="text-xl">➡️</span>
       <span>পরের পৃষ্ঠা</span>
     </button>
-    <button onclick="App.openMobileConnectModal()" class="flex flex-col items-center text-slate-600 font-semibold text-xs">
-      <span class="text-xl">📱</span>
-      <span>কানেক্ট</span>
+    <button onclick="App.toggleAllRecordsView()" class="flex flex-col items-center text-slate-600 font-semibold text-xs">
+      <span class="text-xl">📋</span>
+      <span>তালিকা</span>
     </button>
   </div>
 
