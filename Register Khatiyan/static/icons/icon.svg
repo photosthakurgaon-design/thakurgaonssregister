@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="coverGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f766e" />
+      <stop offset="100%" stop-color="#134e4a" />
+    </linearGradient>
+    <linearGradient id="spineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0d9488" />
+      <stop offset="100%" stop-color="#115e59" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="125%" height="125%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000" flood-opacity="0.35" />
+    </filter>
+  </defs>
+
+  <!-- Outer Shadow & Book Cover -->
+  <rect x="48" y="36" width="416" height="440" rx="44" fill="url(#coverGrad)" filter="url(#shadow)" />
+  
+  <!-- Spine -->
+  <rect x="48" y="36" width="72" height="440" rx="36" fill="url(#spineGrad)" />
+  <rect x="80" y="36" width="40" height="440" fill="url(#spineGrad)" />
+  
+  <!-- Gold Embossed Line -->
+  <line x1="128" y1="56" x2="128" y2="456" stroke="#f59e0b" stroke-width="5" stroke-linecap="round" />
+  
+  <!-- Ledger Paper Insert -->
+  <rect x="156" y="68" width="280" height="376" rx="18" fill="#fef9c3" />
+  
+  <!-- Red Ledger Left Margin Line -->
+  <line x1="220" y1="76" x2="220" y2="436" stroke="#e11d48" stroke-width="2.5" opacity="0.8" />
+  
+  <!-- Ruled Blue Lines -->
+  <line x1="170" y1="130" x2="422" y2="130" stroke="#94a3b8" stroke-width="2" opacity="0.6" />
+  <line x1="170" y1="180" x2="422" y2="180" stroke="#94a3b8" stroke-width="2" opacity="0.6" />
+  <line x1="170" y1="230" x2="422" y2="230" stroke="#94a3b8" stroke-width="2" opacity="0.6" />
+  <line x1="170" y1="280" x2="422" y2="280" stroke="#94a3b8" stroke-width="2" opacity="0.6" />
+  <line x1="170" y1="330" x2="422" y2="330" stroke="#94a3b8" stroke-width="2" opacity="0.6" />
+  <line x1="170" y1="380" x2="422" y2="380" stroke="#94a3b8" stroke-width="2" opacity="0.6" />
+  
+  <!-- Red Bookmark Ribbon -->
+  <polygon points="380,36 416,36 416,160 398,142 380,160" fill="#dc2626" />
+  
+  <!-- Center Badge / Seal -->
+  <circle cx="320" cy="270" r="64" fill="#0d9488" filter="url(#shadow)" />
+  <circle cx="320" cy="270" r="56" fill="#14b8a6" />
+  
+  <!-- Checkmark / Pen Icon -->
+  <path d="M292 272 L312 292 L350 248" fill="none" stroke="#ffffff" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" />
+</svg>
+

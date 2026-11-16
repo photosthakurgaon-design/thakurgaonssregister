@@ -1,0 +1,222 @@
+/* 
+  ডিজিটাল খতিয়ান - মালামাল ক্রয় রেজিস্টার খাতা
+  Custom Stylesheet & Authentic Ledger Design
+*/
+
+:root {
+  --primary-khata: #0f766e;        /* Classic Ledger Teal */
+  --primary-dark: #115e59;
+  --primary-light: #ccfbf1;
+  --ledger-paper: #faf8f2;         /* Authentic ivory/cream ledger sheet */
+  --ledger-line: #cbd5e1;          /* Soft horizontal ruled lines */
+  --ledger-margin-red: #e11d48;    /* Traditional red margin line */
+  --ledger-double-line: #0f766e;
+  --book-leather: #134e4a;
+  --accent-gold: #f59e0b;
+}
+
+body {
+  font-family: 'Hind Siliguri', 'Noto Sans Bengali', system-ui, -apple-system, sans-serif;
+  background-color: #f1f5f9;
+  color: #1e293b;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Book Cover & Spine Effect */
+.khata-book-shadow {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.12), 0 10px 10px -5px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.05);
+}
+
+.khata-spine {
+  background: linear-gradient(90deg, #093b37 0%, #0d9488 40%, #0f766e 70%, #115e59 100%);
+  border-right: 3px double #f59e0b;
+}
+
+/* Ledger Paper Sheet Texture & Styling */
+.ledger-sheet {
+  background-color: var(--ledger-paper);
+  background-image: 
+    radial-gradient(#e2e8f0 0.75px, transparent 0.75px),
+    linear-gradient(to right, transparent 58px, rgba(225, 29, 72, 0.3) 58px, rgba(225, 29, 72, 0.3) 60px, transparent 60px);
+  background-size: 20px 20px, 100% 100%;
+  position: relative;
+}
+
+@media (max-width: 640px) {
+  .ledger-sheet {
+    background-image: 
+      linear-gradient(to right, transparent 38px, rgba(225, 29, 72, 0.3) 38px, rgba(225, 29, 72, 0.3) 40px, transparent 40px);
+  }
+}
+
+/* Ledger Table Ruling */
+.table-ledger {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.table-ledger th {
+  background-color: #f8fafc;
+  border-top: 2px solid var(--primary-khata);
+  border-bottom: 2px solid var(--primary-khata);
+  border-right: 1px solid #cbd5e1;
+  color: #0f766e;
+  font-weight: 700;
+  padding: 10px 8px;
+  text-align: center;
+  font-size: 0.88rem;
+  letter-spacing: 0.02em;
+}
+
+.table-ledger th:first-child {
+  border-left: 2px solid var(--ledger-margin-red);
+}
+
+.table-ledger th:last-child {
+  border-right: 1px solid #cbd5e1;
+}
+
+.table-ledger td {
+  border-bottom: 1px solid #e2e8f0;
+  border-right: 1px solid #e2e8f0;
+  padding: 10px 8px;
+  vertical-align: middle;
+  font-size: 0.92rem;
+  background-color: rgba(255, 255, 255, 0.6);
+}
+
+.table-ledger td:first-child {
+  border-left: 2px solid var(--ledger-margin-red);
+  text-align: center;
+  font-weight: 600;
+}
+
+.table-ledger tr:hover td {
+  background-color: #f0fdfa !important;
+}
+
+.table-ledger tr.empty-row td {
+  height: 44px;
+  background-color: transparent !important;
+}
+
+/* Index Table Styling */
+.table-index th {
+  background: #0f766e;
+  color: #ffffff;
+  padding: 12px 10px;
+  font-weight: 600;
+  border: 1px solid #0d9488;
+}
+
+.table-index td {
+  border: 1px solid #e2e8f0;
+  padding: 12px 10px;
+  vertical-align: middle;
+}
+
+.table-index tr:hover td {
+  background-color: #f8fafc;
+}
+
+/* Badge for Page Numbers */
+.page-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.025em;
+  background: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+  transition: all 0.2s ease;
+}
+
+.page-badge:hover {
+  background: #0284c7;
+  color: #ffffff;
+  transform: scale(1.05);
+}
+
+/* Pulse animation for active indicator */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.pulse-dot {
+  animation: pulse-dot 2s infinite ease-in-out;
+}
+
+/* Watermark or Page Number stamp in top corner */
+.page-stamp {
+  border: 2px solid #0f766e;
+  border-radius: 8px;
+  padding: 4px 12px;
+  font-weight: 800;
+  color: #0f766e;
+  background: #ffffff;
+  box-shadow: 2px 2px 0px rgba(15, 118, 110, 0.2);
+}
+
+/* Mobile responsive fixes */
+@media (max-width: 768px) {
+  .hide-on-mobile {
+    display: none !important;
+  }
+}
+
+/* ======================================================== */
+/* SELECT OPTION VISIBILITY FIX (Windows/Chrome/Mobile fix) */
+/* ======================================================== */
+select {
+  cursor: pointer;
+}
+
+select option {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  padding: 8px 12px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+}
+
+select optgroup {
+  background-color: #e6fffa !important;
+  color: #0d9488 !important;
+  font-weight: 800 !important;
+  font-size: 13px !important;
+  padding: 6px 8px !important;
+}
+
+#top-page-selector {
+  color: #ffffff !important;
+  background-color: rgba(15, 118, 110, 0.95) !important;
+}
+
+#top-page-selector option {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+
+

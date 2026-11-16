@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ডিজিটাল খতিয়ান - মালামাল ক্রয় রেজিস্টার খাতা</title>
+  
+  <!-- PWA Meta Tags -->
+  <meta name="theme-color" content="#0f766e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="রেজিস্টার খাতা">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+
+  <!-- Google Fonts: Hind Siliguri (Bengali) & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Custom Stylesheets -->
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/print.css" media="print">
+</head>
+<body class="bg-slate-100 flex flex-col min-h-screen text-slate-800">
+
+  <!-- TOP HEADER / NAVIGATION (Hidden on Print) -->
+  <header id="app-header" class="no-print bg-teal-800 text-white shadow-md sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        
+        <!-- App Title & Logo -->
+        <div class="flex items-center gap-3 cursor-pointer" onclick="App.goToPage(1)">
+          <div class="w-10 h-10 rounded-xl bg-teal-700 border border-teal-500/50 flex items-center justify-center text-xl shadow-inner">
+            📖
+          </div>
+          <div>
+            <h1 class="font-bold text-lg leading-tight tracking-wide flex items-center gap-2">
+              ডিজিটাল রেজিস্টার খাতা
+              <span class="text-xs bg-amber-400 text-teal-950 font-extrabold px-2 py-0.5 rounded-full">২৫০ পৃষ্ঠা</span>
+            </h1>
+            <p class="text-xs text-teal-200">মালামাল ক্রয় ও মজুত খতিয়ান</p>
+          </div>
+        </div>
+
+        <!-- Global Search Bar -->
+        <div class="hidden md:flex flex-1 max-w-md mx-6">
+          <div class="relative w-full">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 pointer-events-none">
+              🔍
+            </span>
+            <input 
+              type="text" 
+              id="global-search-input" 
+              placeholder="যেকোনো মালামাল, ভাউচার, দোকান বা ক্যাটাগরি খুঁজুন..." 
+              class="w-full pl-9 pr-4 py-1.5 bg-teal-900/60 border border-teal-600/50 rounded-xl text-sm text-white placeholder-teal-300 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:bg-teal-900 transition"
+            >
+          </div>
+        </div>
+
+        <!-- Top Right Actions -->
+        <div class="flex items-center gap-2 sm:gap-3">
+          
+          <!-- Page Selector Dropdown with Prev/Next buttons -->
+          <div class="flex items-center gap-1 bg-teal-950/80 px-2 py-1 rounded-xl border border-teal-600/70 shadow-inner">
+            <button type="button" onclick="App.prevPage()" class="px-1.5 py-1 text-teal-300 hover:text-white hover:bg-teal-800 rounded transition text-xs font-bold" title="আগের পৃষ্ঠা">
+              ◀
+            </button>
+            <span class="text-xs text-amber-300 font-bold hidden sm:inline">পৃষ্ঠা:</span>
+            <select id="top-page-selector" class="bg-teal-900 text-white border border-teal-600/50 rounded-lg text-xs sm:text-sm font-bold focus:outline-none focus:ring-1 focus:ring-amber-400 cursor-pointer px-2 py-1 max-w-[150px] sm:max-w-[220px]">
+              <!-- Dynamically populated 1 to 250 with Mother Category labels -->
+            </select>
+            <button type="button" onclick="App.nextPage()" class="px-1.5 py-1 text-teal-300 hover:text-white hover:bg-teal-800 rounded transition text-xs font-bold" title="পরের পৃষ্ঠা">
+              ▶
+            </button>
+          </div>
+
+          <!-- New Entry Button -->
+          <button onclick="App.openNewEntryModal()" class="bg-amber-500 hover:bg-amber-600 text-teal-950 font-bold px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-sm shadow-md transition flex items-center gap-1.5">
+            <span class="text-base font-extrabold">+</span>
+            <span class="hidden sm:inline">নতুন এন্ট্রি</span>
+          </button>
+
+          <!-- Mobile Connect (QR) -->
+          <button onclick="App.openMobileConnectModal()" class="p-2 sm:px-3 sm:py-1.5 bg-teal-700 hover:bg-teal-600 rounded-xl text-sm font-medium transition flex items-center gap-1.5" title="মোবাইলে যুক্ত করুন">
+            <span>📱</span>
+            <span class="hidden lg:inline">মোবাইল কানেক্ট</span>
+          </button>
+
+          <!-- Print Button -->
+          <button onclick="App.printCurrentView()" class="p-2 sm:px-3 sm:py-1.5 bg-teal-700 hover:bg-teal-600 rounded-xl text-sm font-medium transition flex items-center gap-1.5" title="প্রিন্ট করুন">
+            <span>🖨️</span>
+            <span class="hidden lg:inline">প্রিন্ট</span>
+          </button>
+
+          <!-- Backup / Export -->
+          <button onclick="App.openBackupModal()" class="p-2 sm:px-3 sm:py-1.5 bg-teal-700 hover:bg-teal-600 rounded-xl text-sm font-medium transition flex items-center gap-1.5" title="ব্যাকআপ ও এক্সপোর্ট">
+            <span>💾</span>
+            <span class="hidden xl:inline">ব্যাকআপ</span>
+          </button>
+
+          <!-- Install PWA Button -->
+          <button id="btn-install-pwa" onclick="App.promptInstallPWA()" class="hidden bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-3 py-1.5 rounded-xl text-xs shadow transition items-center gap-1">
+            <span>📲</span>
+            <span>ইনস্টল অ্যাপ</span>
+          </button>
+
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN APP CONTAINER -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 lg:p-8 no-print pb-24 sm:pb-8">
+
+    <!-- OVERVIEW STATS BAR -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
+      <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80 flex items-center justify-between">
+        <div>
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">সর্বমোট ক্রয় ব্যয়</p>
+          <h3 id="stat-total-cost" class="text-xl sm:text-2xl font-bold text-teal-900 mt-0.5">৳ ০.০০</h3>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center text-xl">💰</div>
+      </div>
+
+      <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80 flex items-center justify-between">
+        <div>
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">মোট মালামাল সংখ্যা</p>
+          <h3 id="stat-total-items" class="text-xl sm:text-2xl font-bold text-slate-800 mt-0.5">০ টি</h3>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center text-xl">📦</div>
+      </div>
+
+      <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80 flex items-center justify-between">
+        <div>
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">ব্যবহৃত খাতা পৃষ্ঠা</p>
+          <h3 id="stat-active-pages" class="text-xl sm:text-2xl font-bold text-slate-800 mt-0.5">০ / ২৫০</h3>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center text-xl">📄</div>
+      </div>
+
+      <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition" onclick="App.goToPage(1)">
+        <div>
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">১ম পৃষ্ঠা: সূচিপত্র</p>
+          <h3 class="text-sm sm:text-base font-bold text-teal-700 mt-1 flex items-center gap-1">
+            মাদার ইনডেক্স ➔
+          </h3>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center text-xl">📑</div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- VIEW 1: PAGE 1 - সূচিপত্র (MASTER INDEX)   -->
+    <!-- ========================================== -->
+    <div id="view-index-page" class="space-y-6">
+      
+      <!-- Khata Cover / Header Banner -->
+      <div class="bg-gradient-to-r from-teal-900 via-teal-800 to-teal-950 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden border-b-4 border-amber-400">
+        <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-700/60 text-amber-300 text-xs font-bold mb-2">
+              <span>📖</span> খাতার ১ম পৃষ্ঠা: সূচিপত্র (Table of Contents)
+            </div>
+            <h2 class="text-2xl sm:text-3xl font-extrabold tracking-wide">মালামাল ক্রয় রেজিস্টার খাতা</h2>
+            <p class="text-teal-200 text-sm mt-1 max-w-2xl">
+              প্রতিটি পণ্য কেনার পর তার নির্ধারিত মাদার ইনডেক্স পেজে এন্ট্রি রাখা হয়। নিচে নির্দিষ্ট ক্যাটাগরিতে ক্লিক করে সেই পৃষ্ঠা সরাসরি খুলুন।
+            </p>
+          </div>
+          <div class="flex flex-wrap items-center gap-3">
+            <button onclick="App.openCategoryModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-xl text-sm shadow transition flex items-center gap-2">
+              <span>➕</span> নতুন মাদার ক্যাটাগরি
+            </button>
+            <button onclick="App.printCurrentView()" class="bg-teal-700/80 hover:bg-teal-700 text-teal-100 font-semibold px-4 py-2 rounded-xl text-sm border border-teal-500/50 transition flex items-center gap-2">
+              <span>🖨️</span> সূচিপত্র প্রিন্ট
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Desktop Table View of Master Index -->
+      <div class="hidden sm:block bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <table class="table-index w-full">
+          <thead>
+            <tr>
+              <th style="width: 5%;">ক্র: নং</th>
+              <th style="width: 25%;">মাদার আইটেম / হিসাবের নাম</th>
+              <th style="width: 28%;">পণ্যের ধরন ও উদাহরণ</th>
+              <th style="width: 14%;">বরাদ্দকৃত পৃষ্ঠা</th>
+              <th style="width: 10%;">মোট এন্ট্রি</th>
+              <th style="width: 12%;">সর্বমোট ব্যয়</th>
+              <th style="width: 16%;">অ্যাকশন</th>
+            </tr>
+          </thead>
+          <tbody id="index-table-body">
+            <!-- Dynamically populated -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Mobile Cards View of Master Index -->
+      <div id="index-cards-mobile" class="sm:hidden grid grid-cols-1 gap-3">
+        <!-- Dynamically populated for phone screens -->
+      </div>
+
+    </div>
+
+    <!-- ========================================== -->
+    <!-- VIEW 2: PAGES 2-250 - LEDGER PAGE VIEW    -->
+    <!-- ========================================== -->
+    <div id="view-ledger-page" class="hidden space-y-4">
+      
+      <!-- Top Ledger Page Navigation Bar -->
+      <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-3">
+        
+        <!-- Left: Flip Prev/Next & Jump -->
+        <div class="flex items-center gap-2">
+          <button onclick="App.prevPage()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm transition flex items-center gap-1" title="আগের পৃষ্ঠা">
+            <span>⬅️</span> <span class="hidden sm:inline">আগের পৃষ্ঠা</span>
+          </button>
+          
+          <div class="page-stamp flex items-center gap-2">
+            <span id="ledger-page-num-title" class="text-sm sm:text-base font-extrabold text-teal-800">পৃষ্ঠা নং: ৫</span>
+            <span class="text-xs text-slate-400 font-normal">/ ২৫০</span>
+          </div>
+
+          <button onclick="App.nextPage()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm transition flex items-center gap-1" title="পরের পৃষ্ঠা">
+            <span class="hidden sm:inline">পরের পৃষ্ঠা</span> <span>➡️</span>
+          </button>
+        </div>
+
+        <!-- Center: Jump to Index -->
+        <button onclick="App.goToPage(1)" class="px-3.5 py-1.5 bg-teal-50 hover:bg-teal-100 text-teal-800 font-bold rounded-xl text-sm border border-teal-200 transition flex items-center gap-1.5">
+          <span>📖</span> ১ম পৃষ্ঠা (সূচিপত্র)
+        </button>
+
+        <!-- Right: Actions for Current Page -->
+        <div class="flex items-center gap-2">
+          <button onclick="App.openNewEntryModal(null, App.state.currentPage)" class="bg-teal-700 hover:bg-teal-800 text-white font-bold px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-sm shadow transition flex items-center gap-1.5">
+            <span>➕</span> <span>এই পৃষ্ঠায় এন্ট্রি</span>
+          </button>
+          <button onclick="App.printCurrentView()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-sm border border-slate-300 transition flex items-center gap-1.5" title="পৃষ্ঠা প্রিন্ট">
+            <span>🖨️</span> <span class="hidden sm:inline">প্রিন্ট</span>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- AUTHENTIC REGISTER BOOK SHEET -->
+      <div class="bg-white rounded-2xl khata-book-shadow overflow-hidden border border-slate-300">
+        
+        <!-- Book Header Banner -->
+        <div class="bg-teal-900 text-white px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-3 border-b-2 border-amber-400">
+          <div>
+            <h2 id="ledger-category-title" class="text-xl sm:text-2xl font-extrabold flex items-center tracking-wide">
+              📦 স্টেশনারি দ্রব্যাদি (Stationery Items)
+            </h2>
+            <p id="ledger-category-subtitle" class="text-xs sm:text-sm text-teal-200 mt-0.5">
+              মাদার ইনডেক্স বিবরণ
+            </p>
+          </div>
+          <div class="flex items-center gap-4 text-sm bg-teal-950/60 px-4 py-2 rounded-xl border border-teal-700/50">
+            <div>
+              <span class="text-teal-300 text-xs block">পৃষ্ঠার মোট আইটেম</span>
+              <strong id="ledger-page-item-count" class="text-base text-white">০ টি</strong>
+            </div>
+            <div class="border-l border-teal-700 pl-4">
+              <span class="text-teal-300 text-xs block">পৃষ্ঠার মোট খরচ</span>
+              <strong id="ledger-page-total-amount" class="text-base text-amber-300">৳ ০.০০</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ruled Ledger Paper Sheet -->
+        <div class="ledger-sheet p-3 sm:p-6 overflow-x-auto min-h-[500px]">
+          <table class="table-ledger">
+            <thead>
+              <tr>
+                <th style="width: 4%;">ক্র: নং</th>
+                <th style="width: 10%;">ক্রয়ের তারিখ</th>
+                <th style="width: 26%;">মালের বিবরণ ও স্পেসিফিকেশন</th>
+                <th style="width: 9%;">ভাউচার নং</th>
+                <th style="width: 7%;">পরিমাণ</th>
+                <th style="width: 6%;">একক</th>
+                <th style="width: 10%;">দর (টাকা)</th>
+                <th style="width: 12%;">মোট টাকা (৳)</th>
+                <th style="width: 14%;">সরবরাহকারী ও মন্তব্য</th>
+                <th style="width: 8%;" class="action-column">অ্যাকশন</th>
+              </tr>
+            </thead>
+            <tbody id="ledger-table-body">
+              <!-- Dynamically populated items -->
+            </tbody>
+            <tfoot>
+              <tr class="bg-teal-50/80 font-bold border-t-2 border-teal-800 text-slate-900">
+                <td colspan="7" class="text-right py-3 px-4 text-sm font-bold text-teal-950">
+                  পৃষ্ঠার সর্বমোট খরচ (Page Grand Total):
+                </td>
+                <td id="ledger-footer-total" class="text-right py-3 px-3 text-base font-extrabold text-teal-900">
+                  ৳ ০.০০
+                </td>
+                <td colspan="2"></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <!-- Signature Space at Bottom of Khata Page -->
+        <div class="bg-slate-50 px-6 py-4 border-t border-slate-200 flex justify-between text-xs text-slate-500">
+          <div class="text-center w-36 border-t border-slate-300 pt-1">
+            হিসাব রক্ষক / প্রস্তুতকারী
+          </div>
+          <div class="text-center w-36 border-t border-slate-300 pt-1">
+            যাচাইকারী / নিরীক্ষক
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ========================================== -->
+    <!-- VIEW 3: ALL RECORDS / SEARCH RESULTS TABLE -->
+    <!-- ========================================== -->
+    <div id="view-all-records" class="hidden space-y-4">
+      <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex justify-between items-center">
+        <div>
+          <h3 class="text-lg font-bold text-slate-800">🔍 মালামাল সার্চ ও সম্পূর্ণ খাতার তালিকা</h3>
+          <p class="text-xs text-slate-500">সকল পৃষ্ঠা মিলিয়ে মালামাল ক্রয়ের বিবরণী</p>
+        </div>
+        <button onclick="App.exportExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-xl text-sm transition flex items-center gap-1.5">
+          <span>📊</span> এক্সেল ডাউনলোড
+        </button>
+      </div>
+
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-x-auto">
+        <table class="table-ledger w-full">
+          <thead>
+            <tr>
+              <th style="width: 4%;">ক্র: নং</th>
+              <th style="width: 8%;">পৃষ্ঠা নং</th>
+              <th style="width: 15%;">মাদার ক্যাটাগরি</th>
+              <th style="width: 10%;">তারিখ</th>
+              <th style="width: 25%;">পণ্যের বিবরণ</th>
+              <th style="width: 8%;">ভাউচার</th>
+              <th style="width: 8%;">পরিমাণ</th>
+              <th style="width: 9%;">দর (৳)</th>
+              <th style="width: 10%;">মোট টাকা (৳)</th>
+              <th style="width: 8%;">অ্যাকশন</th>
+            </tr>
+          </thead>
+          <tbody id="all-records-table-body">
+            <!-- Dynamically populated -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ========================================== -->
+  <!-- MODAL 1: NEW / EDIT ENTRY (নতুন মালামাল)     -->
+  <!-- ========================================== -->
+  <div id="modal-entry" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto no-print">
+    <div class="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 relative my-8">
+      
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between pb-4 border-b border-slate-200 mb-4">
+        <h3 id="modal-entry-title" class="text-xl font-bold text-teal-900 flex items-center gap-2">
+          ➕ নতুন মালামাল ক্রয় এন্ট্রি
+        </h3>
+        <button onclick="App.closeModal('modal-entry')" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center font-bold">
+          ✕
+        </button>
+      </div>
+
+      <!-- Quick Suggestion Pills -->
+      <div class="mb-4 bg-teal-50/60 p-3 rounded-xl border border-teal-100">
+        <span class="text-xs font-bold text-teal-900 block mb-1.5">⚡ সচরাচর কেনা মালামাল (ক্লিক করলেই ফিল হবে):</span>
+        <div class="flex flex-wrap gap-1.5">
+          <button type="button" onclick="App.quickSetItem('সেফটি হেলমেট', 'হলুদ রঙ সাইট হেলমেট', 'পিস', 450)" class="text-xs bg-white hover:bg-teal-100 text-teal-900 font-medium px-2 py-1 rounded-md border border-teal-200 shadow-2xs">
+            🛡️ সেফটি হেলমেট
+          </button>
+          <button type="button" onclick="App.quickSetItem('বলপেন', 'হাই-স্কুল বলপেন', 'পিস', 6)" class="text-xs bg-white hover:bg-teal-100 text-teal-900 font-medium px-2 py-1 rounded-md border border-teal-200 shadow-2xs">
+            ✏️ কলম
+          </button>
+          <button type="button" onclick="App.quickSetItem('রেজিস্টার খাতা', 'হার্ডকভার ২০০ পৃষ্ঠা', 'পিস', 180)" class="text-xs bg-white hover:bg-teal-100 text-teal-900 font-medium px-2 py-1 rounded-md border border-teal-200 shadow-2xs">
+            📖 খাতা
+          </button>
+          <button type="button" onclick="App.quickSetItem('এইচবি পেন্সিল', '১২ টি বক্স', 'বক্স', 90)" class="text-xs bg-white hover:bg-teal-100 text-teal-900 font-medium px-2 py-1 rounded-md border border-teal-200 shadow-2xs">
+            ✏️ পেন্সিল
+          </button>
+          <button type="button" onclick="App.quickSetItem('এলইডি বাল্ব ২০ ওয়াট', 'হোয়াইট ডে-লাইট', 'পিস', 280)" class="text-xs bg-white hover:bg-teal-100 text-teal-900 font-medium px-2 py-1 rounded-md border border-teal-200 shadow-2xs">
+            ⚡ এলইডি বাল্ব
+          </button>
+          <button type="button" onclick="App.quickSetItem('পেন ড্রাইভ ৩২ জিবি', 'ইউএসবি ৩.০', 'পিস', 650)" class="text-xs bg-white hover:bg-teal-100 text-teal-900 font-medium px-2 py-1 rounded-md border border-teal-200 shadow-2xs">
+            💻 পেন ড্রাইভ
+          </button>
+          <button type="button" onclick="App.quickSetItem('ডকুমেন্ট ফটোকপি', 'এ৪ সাইজ কপি', 'কপি', 3)" class="text-xs bg-white hover:bg-teal-100 text-teal-900 font-medium px-2 py-1 rounded-md border border-teal-200 shadow-2xs">
+            🖨️ ফটোকপি
+          </button>
+        </div>
+      </div>
+
+      <!-- Entry Form -->
+      <form id="form-entry" class="space-y-4">
+        
+        <!-- Category & Page Selection -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-bold text-slate-700 mb-1">মাদার ক্যাটাগরি (ইনডেক্স) *</label>
+            <select id="entry-category-select" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-teal-600 focus:outline-none">
+              <!-- Dynamically populated -->
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">খাতা পৃষ্ঠা নং *</label>
+            <input type="number" id="entry-page-num" min="1" max="250" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm font-bold text-teal-900 text-center focus:ring-2 focus:ring-teal-600 focus:outline-none">
+          </div>
+        </div>
+
+        <!-- Date & Voucher -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">ক্রয়ের তারিখ *</label>
+            <input type="date" id="entry-date" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-teal-600 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">ভাউচার / ক্যাশ মেমো নং</label>
+            <input type="text" id="entry-voucher" placeholder="যেমন: VOUCH-102" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-teal-600 focus:outline-none">
+          </div>
+        </div>
+
+        <!-- Item Name & Spec -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">মালের বিবরণ / পণ্যের নাম *</label>
+          <input type="text" id="entry-item-name" required placeholder="যেমন: সেফটি হেলমেট, জেল কলম, ফটোকপি ইত্যাদি" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm font-medium focus:ring-2 focus:ring-teal-600 focus:outline-none">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">স্পেসিফিকেশন / ব্র্যান্ড / সাইজ</label>
+          <input type="text" id="entry-spec" placeholder="যেমন: হলুদ রঙ, সাইজ L, মডেল ইত্যাদি" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-teal-600 focus:outline-none">
+        </div>
+
+        <!-- Quantity, Unit, Rate, Total (Auto calculate) -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">পরিমাণ *</label>
+            <input type="number" id="entry-qty" step="any" min="0.1" value="1" oninput="App.calculateModalTotal()" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm font-bold text-center focus:ring-2 focus:ring-teal-600 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">একক</label>
+            <select id="entry-unit" class="w-full px-2 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-teal-600 focus:outline-none">
+              <option value="পিস">পিস</option>
+              <option value="বক্স">বক্স</option>
+              <option value="প্যাকেট">প্যাকেট</option>
+              <option value="রিম">রিম</option>
+              <option value="ডজন">ডজন</option>
+              <option value="জোড়া">জোড়া</option>
+              <option value="কেজি">কেজি</option>
+              <option value="লিটার">লিটার</option>
+              <option value="সেট">সেট</option>
+              <option value="কপি">কপি</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">দর (টাকা) *</label>
+            <input type="number" id="entry-unit-price" step="any" min="0" value="0" oninput="App.calculateModalTotal()" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm font-bold text-right focus:ring-2 focus:ring-teal-600 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">মোট টাকা (৳)</label>
+            <input type="hidden" id="entry-total-price" value="0">
+            <div id="display-total-price" class="w-full px-3 py-2 bg-emerald-100/70 border border-emerald-300 text-emerald-900 rounded-xl text-sm font-extrabold text-right">
+              ৳ ০.০০
+            </div>
+          </div>
+        </div>
+
+        <!-- Supplier & Remarks -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">দোকান / সরবরাহকারীর নাম</label>
+            <input type="text" id="entry-supplier" placeholder="দোকানের নাম" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-teal-600 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">মন্তব্য</label>
+            <input type="text" id="entry-remarks" placeholder="ব্যবহারের উদ্দেশ্য বা মন্তব্য" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-teal-600 focus:outline-none">
+          </div>
+        </div>
+
+        <!-- Submit & Cancel -->
+        <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
+          <button type="button" onclick="App.closeModal('modal-entry')" class="px-4 py-2 border border-slate-300 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-100 transition">
+            বাতিল
+          </button>
+          <button type="submit" class="px-6 py-2 bg-teal-800 hover:bg-teal-900 text-white font-bold rounded-xl text-sm shadow-md transition flex items-center gap-2">
+            <span>💾</span> <span>খাতায় সংরক্ষণ করুন</span>
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL 2: MOTHER CATEGORY (নতুন ক্যাটাগরি) -->
+  <!-- ========================================== -->
+  <div id="modal-category" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto no-print">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 relative my-8">
+      
+      <div class="flex items-center justify-between pb-4 border-b border-slate-200 mb-4">
+        <h3 id="modal-cat-title" class="text-xl font-bold text-teal-900 flex items-center gap-2">
+          ➕ নতুন মাদার ক্যাটাগরি তৈরি
+        </h3>
+        <button onclick="App.closeModal('modal-category')" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center font-bold">
+          ✕
+        </button>
+      </div>
+
+      <form id="form-category" class="space-y-4">
+        
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">ক্যাটাগরির বাংলা নাম *</label>
+          <input type="text" id="cat-name-bn" required placeholder="যেমন: সেফটি সরঞ্জাম ও পোশাক" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm font-medium focus:ring-2 focus:ring-teal-600 focus:outline-none">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">ক্যাটাগরির ইংরেজি নাম</label>
+          <input type="text" id="cat-name-en" placeholder="যেমন: Safety Tools & Equipment" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-teal-600 focus:outline-none">
+        </div>
+
+        <!-- Page Range Assignment -->
+        <div class="grid grid-cols-2 gap-3 bg-teal-50/60 p-3 rounded-xl border border-teal-100">
+          <div>
+            <label class="block text-xs font-bold text-teal-950 mb-1">শুরুর পৃষ্ঠা নং (১-২৫০) *</label>
+            <input type="number" id="cat-page-num" min="1" max="250" required class="w-full px-3 py-2 border border-teal-300 rounded-xl text-sm font-bold text-center focus:ring-2 focus:ring-teal-600 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-teal-950 mb-1">শেষ পৃষ্ঠা নং (ঐচ্ছিক)</label>
+            <input type="number" id="cat-page-end" min="1" max="250" class="w-full px-3 py-2 border border-teal-300 rounded-xl text-sm font-bold text-center focus:ring-2 focus:ring-teal-600 focus:outline-none">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">আইকন (ইমোজি)</label>
+          <input type="text" id="cat-icon" value="📦" class="w-20 px-3 py-2 border border-slate-300 rounded-xl text-center text-xl focus:ring-2 focus:ring-teal-600 focus:outline-none">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">পণ্যের সাধারণ বিবরণ / উদাহরণ</label>
+          <textarea id="cat-desc" rows="2" placeholder="যেমন: হেলমেট, গ্লাভস, বুট জুতা, ভেস্ট ইত্যাদি" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-teal-600 focus:outline-none"></textarea>
+        </div>
+
+        <div class="flex items-center justify-between pt-4 border-t border-slate-200">
+          <button type="button" id="cat-delete-btn" class="hidden text-red-600 hover:text-red-800 text-xs font-bold py-2">
+            🗑️ মুছে ফেলুন
+          </button>
+          <div class="flex items-center gap-2 ml-auto">
+            <button type="button" onclick="App.closeModal('modal-category')" class="px-4 py-2 border border-slate-300 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-100 transition">
+              বাতিল
+            </button>
+            <button type="submit" class="px-5 py-2 bg-teal-800 hover:bg-teal-900 text-white font-bold rounded-xl text-sm shadow transition">
+              সংরক্ষণ
+            </button>
+          </div>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL 3: MOBILE CONNECT & QR CODE          -->
+  <!-- ========================================== -->
+  <div id="modal-mobile-connect" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto no-print">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 text-center relative my-8">
+      
+      <button onclick="App.closeModal('modal-mobile-connect')" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center font-bold">
+        ✕
+      </button>
+
+      <div class="w-12 h-12 rounded-2xl bg-teal-100 text-teal-800 flex items-center justify-center text-2xl mx-auto mb-3">
+        📱
+      </div>
+
+      <h3 class="text-xl font-bold text-slate-800">মোবাইল থেকে রেজিস্টার খাতা খুলুন</h3>
+      <p class="text-xs text-slate-500 mt-1 max-w-xs mx-auto">
+        আপনার মোবাইল ক্যামেরা দিয়ে নিচের QR কোডটি স্ক্যান করুন অথবা একই ওয়াইফাই-তে যুক্ত হয়ে লিংকটি খুলুন।
+      </p>
+
+      <!-- QR Code Image -->
+      <div class="my-4 p-3 bg-slate-50 rounded-2xl border border-slate-200 inline-block shadow-inner">
+        <img id="qr-code-image" src="" alt="QR Code" class="w-48 h-48 mx-auto object-contain">
+      </div>
+
+      <!-- URL link & Copy Button -->
+      <div class="bg-slate-100 p-2.5 rounded-xl border border-slate-300 flex items-center justify-between gap-2 text-left mb-4">
+        <a id="mobile-url-text" href="#" target="_blank" class="text-xs font-mono font-bold text-teal-800 truncate hover:underline">
+          http://...
+        </a>
+        <button onclick="App.copyMobileUrl()" class="px-3 py-1 bg-teal-700 hover:bg-teal-800 text-white rounded-lg text-xs font-bold whitespace-nowrap shadow-xs">
+          কপি লিংক
+        </button>
+      </div>
+
+      <!-- How to Install PWA on Phone Guide -->
+      <div class="text-left bg-amber-50/70 p-3.5 rounded-xl border border-amber-200 text-xs text-amber-950 space-y-1.5">
+        <strong class="block text-teal-950 font-bold mb-1">📲 মোবাইলে অ্যাপ হিসেবে ইনস্টল করার নিয়ম:</strong>
+        <p><strong>Android Chrome:</strong> মেন্যু (⋮) বাটনে ট্যাপ করে <em>"Add to Home screen"</em> বা <em>"Install app"</em> সিলেক্ট করুন।</p>
+        <p><strong>iPhone Safari:</strong> নিচে শেয়ার (Share ⎋) বাটনে ট্যাপ করে <em>"Add to Home Screen"</em> সিলেক্ট করুন।</p>
+      </div>
+
+      <button onclick="App.closeModal('modal-mobile-connect')" class="mt-4 w-full py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl text-sm transition">
+        ঠিক আছে
+      </button>
+
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL 4: BACKUP & RESTORE                  -->
+  <!-- ========================================== -->
+  <div id="modal-backup" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto no-print">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 relative my-8">
+      
+      <div class="flex items-center justify-between pb-4 border-b border-slate-200 mb-4">
+        <h3 class="text-xl font-bold text-teal-900 flex items-center gap-2">
+          💾 ব্যাকআপ ও ডাটা এক্সপোর্ট
+        </h3>
+        <button onclick="App.closeModal('modal-backup')" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center font-bold">
+          ✕
+        </button>
+      </div>
+
+      <div class="space-y-4">
+        <!-- JSON Backup -->
+        <div class="p-4 bg-teal-50/70 rounded-xl border border-teal-200">
+          <h4 class="font-bold text-teal-950 text-sm mb-1">১. সম্পূর্ণ খাতার ব্যাকআপ ডাউনলোড</h4>
+          <p class="text-xs text-teal-800 mb-3">সকল ক্যাটাগরি ও মালামাল ক্রয়ের ডাটা ফাইল সেভ করে রাখুন।</p>
+          <button onclick="App.downloadJsonBackup()" class="w-full py-2 bg-teal-800 hover:bg-teal-900 text-white font-bold rounded-xl text-sm shadow transition flex items-center justify-center gap-2">
+            <span>📥</span> JSON ব্যাকআপ ডাউনলোড
+          </button>
+        </div>
+
+        <!-- Excel CSV Export -->
+        <div class="p-4 bg-emerald-50/70 rounded-xl border border-emerald-200">
+          <h4 class="font-bold text-emerald-950 text-sm mb-1">২. এক্সেল (Excel CSV) শিট</h4>
+          <p class="text-xs text-emerald-800 mb-3">সকল এন্ট্রি এক্সেল শিটে ওপেন ও এনালাইসিস করার জন্য।</p>
+          <button onclick="App.exportExcel()" class="w-full py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl text-sm shadow transition flex items-center justify-center gap-2">
+            <span>📊</span> এক্সেল শিট ডাউনলোড
+          </button>
+        </div>
+
+        <!-- Restore from JSON -->
+        <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+          <h4 class="font-bold text-slate-800 text-sm mb-1">৩. পূর্বে সংরক্ষিত ব্যাকআপ রিস্টোর</h4>
+          <p class="text-xs text-slate-500 mb-3">আপনার ব্যাকআপ JSON ফাইল আপলোড করে সমস্ত তথ্য পুনরুদ্ধার করুন।</p>
+          <input type="file" id="restore-file-input" accept=".json" class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-teal-100 file:text-teal-800 hover:file:bg-teal-200">
+        </div>
+      </div>
+
+      <div class="mt-6 text-right">
+        <button onclick="App.closeModal('modal-backup')" class="px-5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold rounded-xl text-sm transition">
+          বন্ধ করুন
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MOBILE BOTTOM BAR (Visible only on mobile) -->
+  <!-- ========================================== -->
+  <div id="bottom-mobile-nav" class="no-print sm:hidden fixed bottom-0 inset-x-0 bg-white border-t border-slate-200 px-4 py-2 z-40 flex items-center justify-around shadow-lg">
+    <button onclick="App.goToPage(1)" class="flex flex-col items-center text-teal-800 font-semibold text-xs">
+      <span class="text-xl">📖</span>
+      <span>সূচিপত্র</span>
+    </button>
+    <button onclick="App.prevPage()" class="flex flex-col items-center text-slate-600 font-semibold text-xs">
+      <span class="text-xl">⬅️</span>
+      <span>আগের পৃষ্ঠা</span>
+    </button>
+    <!-- Floating Add Button -->
+    <button onclick="App.openNewEntryModal()" class="flex flex-col items-center -mt-6">
+      <div class="w-13 h-13 rounded-full bg-amber-500 hover:bg-amber-600 text-teal-950 flex items-center justify-center text-2xl font-black shadow-lg border-4 border-white">
+        +
+      </div>
+      <span class="text-2xs font-bold text-teal-950 mt-0.5">নতুন এন্ট্রি</span>
+    </button>
+    <button onclick="App.nextPage()" class="flex flex-col items-center text-slate-600 font-semibold text-xs">
+      <span class="text-xl">➡️</span>
+      <span>পরের পৃষ্ঠা</span>
+    </button>
+    <button onclick="App.openMobileConnectModal()" class="flex flex-col items-center text-slate-600 font-semibold text-xs">
+      <span class="text-xl">📱</span>
+      <span>কানেক্ট</span>
+    </button>
+  </div>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div id="toast-container" class="no-print fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- PRINTABLE LEDGER CONTAINER (Rendered only on print) -->
+  <div id="printable-area" class="print-container hidden"></div>
+
+  <!-- App Scripts -->
+  <script src="js/db.js"></script>
+  <script src="js/print.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>
+
