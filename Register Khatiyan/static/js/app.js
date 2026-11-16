@@ -447,6 +447,55 @@ const App = {
     tableBody.innerHTML = rows;
   },
 
+  // Toggle View between Ledger and All Records Table
+  toggleAllRecordsView() {
+    if (this.state.viewMode === 'all-table') {
+      this.state.viewMode = 'ledger';
+    } else {
+      this.state.viewMode = 'all-table';
+    }
+    this.render();
+  },
+
+  // Clear Search Input and return to ledger view
+  clearSearch() {
+    this.state.searchQuery = '';
+    const searchInput = document.getElementById('global-search-input');
+    if (searchInput) searchInput.value = '';
+    const clearBtn = document.getElementById('search-clear-btn');
+    if (clearBtn) clearBtn.classList.add('hidden');
+    this.state.viewMode = 'ledger';
+    this.render();
+  },
+
+  // Sidebar Controls (Mobile & Desktop)
+  toggleSidebar() {
+    const sidebar = document.getElementById('app-sidebar');
+    const backdrop = document.getElementById('sidebar-backdrop');
+    if (sidebar) {
+      const isClosed = sidebar.classList.contains('-translate-x-full');
+      if (isClosed) {
+        sidebar.classList.remove('-translate-x-full');
+        sidebar.classList.add('translate-x-0');
+        if (backdrop) backdrop.classList.remove('hidden');
+      } else {
+        sidebar.classList.add('-translate-x-full');
+        sidebar.classList.remove('translate-x-0');
+        if (backdrop) backdrop.classList.add('hidden');
+      }
+    }
+  },
+
+  closeSidebar() {
+    const sidebar = document.getElementById('app-sidebar');
+    const backdrop = document.getElementById('sidebar-backdrop');
+    if (sidebar && window.innerWidth < 1024) {
+      sidebar.classList.add('-translate-x-full');
+      sidebar.classList.remove('translate-x-0');
+    }
+    if (backdrop) backdrop.classList.add('hidden');
+  },
+
   // Modal Handlers
   openNewEntryModal(categoryId = null, pageNumber = null) {
     this.state.editingItemId = null;
@@ -868,9 +917,17 @@ const App = {
 
     // Live Search
     const searchInput = document.getElementById('global-search-input');
+    const clearBtn = document.getElementById('search-clear-btn');
     if (searchInput) {
       searchInput.addEventListener('input', (e) => {
         this.state.searchQuery = e.target.value.trim();
+        if (clearBtn) {
+          if (this.state.searchQuery.length > 0) {
+            clearBtn.classList.remove('hidden');
+          } else {
+            clearBtn.classList.add('hidden');
+          }
+        }
         if (this.state.searchQuery.length > 0) {
           this.state.viewMode = 'all-table';
         } else {

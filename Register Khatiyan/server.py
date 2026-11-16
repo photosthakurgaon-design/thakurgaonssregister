@@ -9,7 +9,13 @@ import database as db
 import qrcode
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-STATIC_DIR = os.path.join(BASE_DIR, 'static')
+possible_dirs = [
+    os.path.join(BASE_DIR, 'static'),
+    os.path.join(BASE_DIR, 'Register Khatiyan', 'static'),
+    os.path.join(os.getcwd(), 'static'),
+    os.path.join(os.getcwd(), 'Register Khatiyan', 'static')
+]
+STATIC_DIR = next((d for d in possible_dirs if os.path.isdir(d)), os.path.join(BASE_DIR, 'static'))
 
 app = Flask(__name__, static_folder=STATIC_DIR, static_url_path='')
 

@@ -219,4 +219,32 @@ select optgroup {
   color: #0f172a !important;
 }
 
+/* ======================================================== */
+/* PROMINENT SEARCH BAR STYLING                             */
+/* ======================================================== */
+#global-search-input {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  font-weight: 700 !important;
+  font-size: 15px !important;
+}
+
+#global-search-input::placeholder {
+  color: #64748b !important;
+  font-weight: 500 !important;
+}
+
+#global-search-input:focus {
+  background-color: #ffffff !important;
+  color: #020617 !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.35) !important;
+}
+
+/* Sidebar Custom Scroll */
+#app-sidebar {
+  overflow-y: auto;
+}
+
+
 

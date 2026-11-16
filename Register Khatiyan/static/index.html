@@ -26,93 +26,164 @@
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/print.css" media="print">
 </head>
-<body class="bg-slate-100 flex flex-col min-h-screen text-slate-800">
+<body class="bg-slate-100 flex min-h-screen text-slate-800 antialiased overflow-x-hidden">
 
-  <!-- TOP HEADER / NAVIGATION (Hidden on Print) -->
-  <header id="app-header" class="no-print bg-teal-800 text-white shadow-md sticky top-0 z-40">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex items-center justify-between h-16">
-        
-        <!-- App Title & Logo -->
-        <div class="flex items-center gap-3 cursor-pointer" onclick="App.goToPage(1)">
-          <div class="w-10 h-10 rounded-xl bg-teal-700 border border-teal-500/50 flex items-center justify-center text-xl shadow-inner">
+  <!-- SIDEBAR BACKDROP (Mobile only) -->
+  <div id="sidebar-backdrop" onclick="App.closeSidebar()" class="hidden fixed inset-0 bg-black/60 z-40 lg:hidden backdrop-blur-xs transition-opacity"></div>
+
+  <!-- ========================================== -->
+  <!-- LEFT SIDEBAR (হলুদ মার্ক করা মেন্যুসমূহ) -->
+  <!-- ========================================== -->
+  <aside id="app-sidebar" class="no-print fixed lg:sticky top-0 left-0 z-50 h-screen w-64 bg-teal-950 text-white flex flex-col justify-between border-r-2 border-teal-800 shadow-2xl transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out shrink-0">
+    
+    <div>
+      <!-- Logo & Title -->
+      <div class="p-4 sm:p-5 border-b border-teal-800/80 flex items-center justify-between">
+        <div class="flex items-center gap-3 cursor-pointer" onclick="App.goToPage(1); App.closeSidebar();">
+          <div class="w-10 h-10 rounded-xl bg-teal-800 border border-teal-600 flex items-center justify-center text-2xl shadow-inner">
             📖
           </div>
           <div>
-            <h1 class="font-bold text-lg leading-tight tracking-wide flex items-center gap-2">
-              ডিজিটাল রেজিস্টার খাতা
-              <span class="text-xs bg-amber-400 text-teal-950 font-extrabold px-2 py-0.5 rounded-full">২৫০ পৃষ্ঠা</span>
+            <h1 class="font-extrabold text-base leading-tight tracking-wide text-white">
+              রেজিস্টার খাতা
             </h1>
-            <p class="text-xs text-teal-200">মালামাল ক্রয় ও মজুত খতিয়ান</p>
+            <p class="text-xs text-amber-300 font-bold flex items-center gap-1 mt-0.5">
+              <span>মালামাল ক্রয় খতিয়ান</span>
+              <span class="bg-amber-400 text-teal-950 text-2xs px-1.5 py-0.2 rounded-full font-black">২৫০ পৃষ্ঠা</span>
+            </p>
           </div>
         </div>
+        <!-- Close button on mobile -->
+        <button onclick="App.closeSidebar()" class="lg:hidden text-teal-300 hover:text-white p-1 text-xl font-bold">
+          ✕
+        </button>
+      </div>
 
-        <!-- Global Search Bar -->
-        <div class="hidden md:flex flex-1 max-w-md mx-6">
+      <!-- Prominent "+ নতুন এন্ট্রি" Button -->
+      <div class="p-3.5 pb-2">
+        <button onclick="App.openNewEntryModal(); App.closeSidebar();" class="w-full bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-teal-950 font-black py-3 px-4 rounded-xl text-sm sm:text-base shadow-lg hover:shadow-xl transition flex items-center justify-center gap-2 transform active:scale-95 cursor-pointer">
+          <span class="text-xl font-black">+</span>
+          <span>নতুন মালামাল এন্ট্রি</span>
+        </button>
+      </div>
+
+      <!-- Navigation Menu Items (হলুদ চিহ্নিত মেনুসমূহ) -->
+      <nav class="px-3 py-2 space-y-1.5 text-sm font-semibold">
+        
+        <!-- 1. সূচিপত্র -->
+        <button onclick="App.goToPage(1); App.closeSidebar();" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-teal-900 text-teal-100 hover:text-white transition text-left group cursor-pointer">
+          <span class="text-xl">📖</span>
+          <span class="flex-1 font-bold">১ম পৃষ্ঠা: সূচিপত্র</span>
+          <span class="text-2xs bg-teal-900 group-hover:bg-teal-800 text-amber-300 px-2 py-0.5 rounded-full font-bold">ইনডেক্স</span>
+        </button>
+
+        <!-- 2. সকল মালামালের তালিকা -->
+        <button onclick="App.toggleAllRecordsView(); App.closeSidebar();" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-teal-900 text-teal-100 hover:text-white transition text-left cursor-pointer">
+          <span class="text-xl">📋</span>
+          <span class="flex-1 font-bold">সকল মালামালের তালিকা</span>
+        </button>
+
+        <!-- 3. মোবাইল কানেক্ট (QR) -->
+        <button onclick="App.openMobileConnectModal(); App.closeSidebar();" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-teal-900 text-teal-100 hover:text-white transition text-left cursor-pointer">
+          <span class="text-xl">📱</span>
+          <span class="flex-1 font-bold">মোবাইল কানেক্ট</span>
+          <span class="text-2xs bg-emerald-700 text-white px-2 py-0.5 rounded-full font-bold">QR কোড</span>
+        </button>
+
+        <!-- 4. প্রিন্ট খাতা -->
+        <button onclick="App.printCurrentView(); App.closeSidebar();" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-teal-900 text-teal-100 hover:text-white transition text-left cursor-pointer">
+          <span class="text-xl">🖨️</span>
+          <span class="flex-1 font-bold">খাতা প্রিন্ট করুন</span>
+        </button>
+
+        <!-- 5. ব্যাকআপ ও এক্সপোর্ট -->
+        <button onclick="App.openBackupModal(); App.closeSidebar();" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-teal-900 text-teal-100 hover:text-white transition text-left cursor-pointer">
+          <span class="text-xl">💾</span>
+          <span class="flex-1 font-bold">ব্যাকআপ ও এক্সপোর্ট</span>
+        </button>
+
+        <!-- 6. ইনস্টল অ্যাপ (PWA) -->
+        <button id="btn-install-pwa" onclick="App.promptInstallPWA(); App.closeSidebar();" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-white transition text-left cursor-pointer">
+          <span class="text-xl">📲</span>
+          <span class="flex-1 font-bold">অ্যাপ ইনস্টল করুন</span>
+        </button>
+
+      </nav>
+    </div>
+
+    <!-- Sidebar Footer / Status Info -->
+    <div class="p-4 border-t border-teal-900 bg-teal-950/90 text-xs text-teal-300">
+      <div class="flex justify-between items-center mb-1">
+        <span>খাতা ধারণক্ষমতা:</span>
+        <span class="font-bold text-white">২৫০ পৃষ্ঠা</span>
+      </div>
+      <div class="flex justify-between items-center">
+        <span>সার্ভার স্ট্যাটাস:</span>
+        <span class="font-bold text-emerald-400 flex items-center gap-1">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse"></span> অনলাইন লাইভ
+        </span>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- ========================================== -->
+  <!-- RIGHT MAIN CONTENT WRAPPER                 -->
+  <!-- ========================================== -->
+  <div class="flex-1 flex flex-col min-w-0 min-h-screen">
+
+    <!-- TOP HEADER / NAVIGATION (বড় সার্চ বক্স ও পেজ সিলেক্টর) -->
+    <header id="app-header" class="no-print bg-teal-900 text-white shadow-md sticky top-0 z-30 px-3 sm:px-6 py-2.5 border-b border-teal-800">
+      <div class="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-4">
+        
+        <!-- Left: Menu toggle button -->
+        <div class="flex items-center gap-2 shrink-0">
+          <button onclick="App.toggleSidebar()" class="p-2 rounded-xl bg-teal-800 hover:bg-teal-700 text-white transition shadow-sm flex items-center gap-1.5 cursor-pointer" title="মেন্যু খুলুন / বন্ধ করুন">
+            <span class="text-xl leading-none font-bold">☰</span>
+            <span class="text-xs font-bold hidden sm:inline">মেন্যু</span>
+          </button>
+        </div>
+
+        <!-- Center: BIG, WIDE, HIGH-CONTRAST SEARCH BOX (লাল মার্ক করা বড় সার্চ বক্স) -->
+        <div class="flex-1 max-w-2xl mx-1 sm:mx-3">
           <div class="relative w-full">
-            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 pointer-events-none">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-teal-700 pointer-events-none text-lg">
               🔍
             </span>
             <input 
               type="text" 
               id="global-search-input" 
-              placeholder="যেকোনো মালামাল, ভাউচার, দোকান বা ক্যাটাগরি খুঁজুন..." 
-              class="w-full pl-9 pr-4 py-1.5 bg-teal-900/60 border border-teal-600/50 rounded-xl text-sm text-white placeholder-teal-300 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:bg-teal-900 transition"
+              placeholder="যেকোনো মালামাল, ভাউচার, দোকান বা ক্যাটাগরি লিখুন..." 
+              class="w-full pl-10 pr-10 py-2 sm:py-2.5 bg-white border-2 border-teal-500 focus:border-amber-400 rounded-xl text-sm sm:text-base font-bold text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-300 shadow-md transition"
             >
+            <button 
+              id="search-clear-btn" 
+              onclick="App.clearSearch()" 
+              type="button" 
+              class="hidden absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-red-600 text-base font-black cursor-pointer"
+              title="সার্চ ক্লিয়ার করুন"
+            >
+              ✕
+            </button>
           </div>
         </div>
 
-        <!-- Top Right Actions -->
-        <div class="flex items-center gap-2 sm:gap-3">
-          
-          <!-- Page Selector Dropdown with Prev/Next buttons -->
-          <div class="flex items-center gap-1 bg-teal-950/80 px-2 py-1 rounded-xl border border-teal-600/70 shadow-inner">
-            <button type="button" onclick="App.prevPage()" class="px-1.5 py-1 text-teal-300 hover:text-white hover:bg-teal-800 rounded transition text-xs font-bold" title="আগের পৃষ্ঠা">
-              ◀
-            </button>
-            <span class="text-xs text-amber-300 font-bold hidden sm:inline">পৃষ্ঠা:</span>
-            <select id="top-page-selector" class="bg-teal-900 text-white border border-teal-600/50 rounded-lg text-xs sm:text-sm font-bold focus:outline-none focus:ring-1 focus:ring-amber-400 cursor-pointer px-2 py-1 max-w-[150px] sm:max-w-[220px]">
-              <!-- Dynamically populated 1 to 250 with Mother Category labels -->
-            </select>
-            <button type="button" onclick="App.nextPage()" class="px-1.5 py-1 text-teal-300 hover:text-white hover:bg-teal-800 rounded transition text-xs font-bold" title="পরের পৃষ্ঠা">
-              ▶
-            </button>
-          </div>
-
-          <!-- New Entry Button -->
-          <button onclick="App.openNewEntryModal()" class="bg-amber-500 hover:bg-amber-600 text-teal-950 font-bold px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-sm shadow-md transition flex items-center gap-1.5">
-            <span class="text-base font-extrabold">+</span>
-            <span class="hidden sm:inline">নতুন এন্ট্রি</span>
+        <!-- Right: Page Selector Dropdown with Prev/Next buttons -->
+        <div class="flex items-center gap-1 bg-teal-950 px-2 py-1 rounded-xl border border-teal-700 shadow-inner shrink-0">
+          <button type="button" onclick="App.prevPage()" class="p-1 sm:px-1.5 text-teal-300 hover:text-white hover:bg-teal-800 rounded transition text-xs font-bold cursor-pointer" title="আগের পৃষ্ঠা">
+            ◀
           </button>
-
-          <!-- Mobile Connect (QR) -->
-          <button onclick="App.openMobileConnectModal()" class="p-2 sm:px-3 sm:py-1.5 bg-teal-700 hover:bg-teal-600 rounded-xl text-sm font-medium transition flex items-center gap-1.5" title="মোবাইলে যুক্ত করুন">
-            <span>📱</span>
-            <span class="hidden lg:inline">মোবাইল কানেক্ট</span>
+          <span class="text-xs text-amber-300 font-bold hidden md:inline">পৃষ্ঠা:</span>
+          <select id="top-page-selector" class="bg-teal-900 text-white border border-teal-600/70 rounded-lg text-xs sm:text-sm font-bold focus:outline-none focus:ring-1 focus:ring-amber-400 cursor-pointer px-1.5 py-1 max-w-[120px] sm:max-w-[200px]">
+            <!-- Dynamically populated 1 to 250 with Mother Category labels -->
+          </select>
+          <button type="button" onclick="App.nextPage()" class="p-1 sm:px-1.5 text-teal-300 hover:text-white hover:bg-teal-800 rounded transition text-xs font-bold cursor-pointer" title="পরের পৃষ্ঠা">
+            ▶
           </button>
-
-          <!-- Print Button -->
-          <button onclick="App.printCurrentView()" class="p-2 sm:px-3 sm:py-1.5 bg-teal-700 hover:bg-teal-600 rounded-xl text-sm font-medium transition flex items-center gap-1.5" title="প্রিন্ট করুন">
-            <span>🖨️</span>
-            <span class="hidden lg:inline">প্রিন্ট</span>
-          </button>
-
-          <!-- Backup / Export -->
-          <button onclick="App.openBackupModal()" class="p-2 sm:px-3 sm:py-1.5 bg-teal-700 hover:bg-teal-600 rounded-xl text-sm font-medium transition flex items-center gap-1.5" title="ব্যাকআপ ও এক্সপোর্ট">
-            <span>💾</span>
-            <span class="hidden xl:inline">ব্যাকআপ</span>
-          </button>
-
-          <!-- Install PWA Button -->
-          <button id="btn-install-pwa" onclick="App.promptInstallPWA()" class="hidden bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-3 py-1.5 rounded-xl text-xs shadow transition items-center gap-1">
-            <span>📲</span>
-            <span>ইনস্টল অ্যাপ</span>
-          </button>
-
         </div>
+
       </div>
-    </div>
-  </header>
+    </header>
 
   <!-- MAIN APP CONTAINER -->
   <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 lg:p-8 no-print pb-24 sm:pb-8">
@@ -361,6 +432,8 @@
     </div>
 
   </main>
+
+  </div> <!-- /RIGHT MAIN CONTENT WRAPPER -->
 
   <!-- ========================================== -->
   <!-- MODAL 1: NEW / EDIT ENTRY (নতুন মালামাল)     -->
