@@ -105,12 +105,48 @@ def network_info():
 def get_summary():
     return jsonify(db.get_summary())
 
+def check_admin_auth():
+    """Verify admin PIN from X-Admin-PIN header or request json/args/form"""
+    pin = request.headers.get('X-Admin-PIN') or request.headers.get('Authorization')
+    if pin and pin.startswith('Bearer '):
+        pin = pin[7:]
+    if not pin and request.is_json:
+        pin = (request.json or {}).get('admin_pin')
+    if not pin and request.form:
+        pin = request.form.get('admin_pin')
+    if not pin:
+        pin = request.args.get('admin_pin')
+    return db.verify_admin_pin(pin)
+
+# Auth Endpoints
+@app.route('/api/auth/verify', methods=['POST'])
+def verify_auth():
+    data = request.json or {}
+    pin = data.get('pin')
+    if db.verify_admin_pin(pin):
+        return jsonify({'success': True, 'message': 'পিন সঠিক হয়েছে'})
+    return jsonify({'success': False, 'error': 'ভুল পিন! পুনরায় সঠিক পিন দিয়ে চেষ্টা করুন'}), 401
+
+@app.route('/api/auth/change-pin', methods=['POST'])
+def change_pin():
+    data = request.json or {}
+    old_pin = data.get('old_pin')
+    new_pin = data.get('new_pin')
+    if not new_pin or len(str(new_pin).strip()) < 4:
+        return jsonify({'error': 'নতুন পিন কমপক্ষে ৪ সংখ্যার হতে হবে'}), 400
+    if not db.verify_admin_pin(old_pin):
+        return jsonify({'error': 'বর্তমান পিনটি সঠিক নয়'}), 401
+    db.set_admin_pin(new_pin)
+    return jsonify({'success': True, 'message': 'অ্যাডমিন পিন সফলভাবে পরিবর্তন করা হয়েছে'})
+
 @app.route('/api/categories', methods=['GET'])
 def list_categories():
     return jsonify(db.get_categories())
 
 @app.route('/api/categories', methods=['POST'])
 def create_category():
+    if not check_admin_auth():
+        return jsonify({'error': 'অননুমোদিত অনুরোধ! নতুন ক্যাটাগরি তৈরি করতে অ্যাডমিন পিন দিয়ে আনলক করুন।'}), 401
     data = request.json or {}
     if not data.get('name') and not data.get('name_bn'):
         return jsonify({'error': 'ক্যাটাগরির নাম আবশ্যক'}), 400
@@ -119,12 +155,16 @@ def create_category():
 
 @app.route('/api/categories/<int:cat_id>', methods=['PUT'])
 def update_category(cat_id):
+    if not check_admin_auth():
+        return jsonify({'error': 'অননুমোদিত অনুরোধ! ক্যাটাগরি পরিবর্তন করতে অ্যাডমিন পিন দিয়ে আনলক করুন।'}), 401
     data = request.json or {}
     db.update_category(cat_id, data)
     return jsonify({'success': True, 'message': 'ক্যাটাগরি সফলভাবে আপডেট হয়েছে'})
 
 @app.route('/api/categories/<int:cat_id>', methods=['DELETE'])
 def delete_category(cat_id):
+    if not check_admin_auth():
+        return jsonify({'error': 'অননুমোদিত অনুরোধ! ক্যাটাগরি মুছতে অ্যাডমিন পিন দিয়ে আনলক করুন।'}), 401
     db.delete_category(cat_id)
     return jsonify({'success': True, 'message': 'ক্যাটাগরি ও সংশ্লিষ্ট এন্ট্রি মুছে ফেলা হয়েছে'})
 
@@ -161,6 +201,8 @@ def get_page(page_number):
 
 @app.route('/api/items', methods=['POST'])
 def create_item():
+    if not check_admin_auth():
+        return jsonify({'error': 'অননুমোদিত অনুরোধ! নতুন এন্ট্রি করতে অ্যাডমিন পিন দিয়ে আনলক করুন।'}), 401
     data = request.json or {}
     if not data.get('item_name'):
         return jsonify({'error': 'মালের বা পণ্যের বিবরণ আবশ্যক'}), 400
@@ -170,12 +212,16 @@ def create_item():
 
 @app.route('/api/items/<int:item_id>', methods=['PUT'])
 def update_item(item_id):
+    if not check_admin_auth():
+        return jsonify({'error': 'অননুমোদিত অনুরোধ! এন্ট্রি এডিট করতে অ্যাডমিন পিন দিয়ে আনলক করুন।'}), 401
     data = request.json or {}
     db.update_item(item_id, data)
     return jsonify({'success': True, 'message': 'এন্ট্রি সফলভাবে আপডেট হয়েছে'})
 
 @app.route('/api/items/<int:item_id>', methods=['DELETE'])
 def delete_item(item_id):
+    if not check_admin_auth():
+        return jsonify({'error': 'অননুমোদিত অনুরোধ! এন্ট্রি ডিলিট করতে অ্যাডমিন পিন দিয়ে আনলক করুন।'}), 401
     db.delete_item(item_id)
     return jsonify({'success': True, 'message': 'এন্ট্রি মুছে ফেলা হয়েছে'})
 
@@ -191,6 +237,8 @@ def download_backup():
 
 @app.route('/api/restore', methods=['POST'])
 def restore_backup():
+    if not check_admin_auth():
+        return jsonify({'error': 'অননুমোদিত অনুরোধ! ব্যাকআপ রিস্টোর করতে অ্যাডমিন পিন দিয়ে আনলক করুন।'}), 401
     if 'file' in request.files:
         import json
         file = request.files['file']

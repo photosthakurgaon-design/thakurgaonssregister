@@ -173,6 +173,7 @@ def init_db():
         cursor.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('org_name', 'আমার প্রতিষ্ঠান / ব্যক্তিগত খতিয়ান')")
         cursor.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('total_pages', '250')")
         cursor.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('currency', '৳')")
+        cursor.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('admin_pin', '1234')")
         
     conn.commit()
     conn.close()
@@ -510,6 +511,27 @@ def restore_full_backup(backup_data):
         return False, str(e)
     finally:
         conn.close()
+
+def get_admin_pin():
+    conn = get_db_connection()
+    row = conn.execute("SELECT value FROM settings WHERE key = 'admin_pin'").fetchone()
+    conn.close()
+    if row and row['value']:
+        return str(row['value']).strip()
+    return os.environ.get('ADMIN_PIN', '1234').strip()
+
+def set_admin_pin(new_pin):
+    conn = get_db_connection()
+    conn.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('admin_pin', ?)", (str(new_pin).strip(),))
+    conn.commit()
+    conn.close()
+    return True
+
+def verify_admin_pin(pin):
+    if not pin:
+        return False
+    current_pin = get_admin_pin()
+    return str(pin).strip() == current_pin
 
 # Auto-initialize DB on import
 init_db()

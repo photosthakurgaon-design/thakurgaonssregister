@@ -118,6 +118,70 @@ class KhatiyanDB {
     });
   }
 
+  clearStore(storeName) {
+    return new Promise((resolve) => {
+      if (!this.db) return resolve(false);
+      const tx = this.db.transaction(storeName, 'readwrite');
+      const store = tx.objectStore(storeName);
+      const req = store.clear();
+      req.onsuccess = () => resolve(true);
+      req.onerror = () => resolve(false);
+    });
+  }
+
+  getAuthPin() {
+    return localStorage.getItem('khatiyan_admin_pin') || sessionStorage.getItem('khatiyan_admin_pin') || '';
+  }
+
+  getAuthHeaders() {
+    const headers = { 'Content-Type': 'application/json' };
+    const pin = this.getAuthPin();
+    if (pin) {
+      headers['X-Admin-PIN'] = pin;
+    }
+    return headers;
+  }
+
+  async verifyPin(pin) {
+    try {
+      const res = await fetch('/api/auth/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin })
+      });
+      const data = await res.json();
+      return { ok: res.ok, ...data };
+    } catch (e) {
+      const savedPin = localStorage.getItem('khatiyan_offline_admin_pin') || '1234';
+      if (String(pin).trim() === savedPin) {
+        return { ok: true, success: true, message: 'অফলাইন পিন সঠিক হয়েছে' };
+      }
+      return { ok: false, success: false, error: 'ভুল পিন! পুনরায় চেষ্টা করুন।' };
+    }
+  }
+
+  async changePin(oldPin, newPin) {
+    try {
+      const res = await fetch('/api/auth/change-pin', {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({ old_pin: oldPin, new_pin: newPin })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        localStorage.setItem('khatiyan_offline_admin_pin', String(newPin).trim());
+      }
+      return { ok: res.ok, ...data };
+    } catch (e) {
+      const savedPin = localStorage.getItem('khatiyan_offline_admin_pin') || '1234';
+      if (String(oldPin).trim() === savedPin) {
+        localStorage.setItem('khatiyan_offline_admin_pin', String(newPin).trim());
+        return { ok: true, success: true, message: 'অফলাইন পিন সফলভাবে পরিবর্তন করা হয়েছে' };
+      }
+      return { ok: false, error: 'বর্তমান পিনটি সঠিক নয়' };
+    }
+  }
+
   // ------------------ High Level APIs ------------------
 
   async getCategories() {
@@ -159,10 +223,17 @@ class KhatiyanDB {
       try {
         const res = await fetch('/api/categories', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: this.getAuthHeaders(),
           body: JSON.stringify(data)
         });
-        if (res.ok) return await res.json();
+        const result = await res.json();
+        if (!res.ok) {
+          return { success: false, error: result.error || 'ক্যাটাগরি তৈরি ব্যর্থ হয়েছে', status: res.status };
+        }
+        if (result.id) {
+          await this.putToStore('categories', { ...data, id: result.id });
+        }
+        return result;
       } catch (e) {
         this.serverOnline = false;
       }
@@ -181,10 +252,15 @@ class KhatiyanDB {
       try {
         const res = await fetch(`/api/categories/${id}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: this.getAuthHeaders(),
           body: JSON.stringify(data)
         });
-        if (res.ok) return await res.json();
+        const result = await res.json();
+        if (!res.ok) {
+          return { success: false, error: result.error || 'ক্যাটাগরি আপডেট ব্যর্থ হয়েছে', status: res.status };
+        }
+        await this.putToStore('categories', { ...data, id: Number(id) });
+        return result;
       } catch (e) {
         this.serverOnline = false;
       }
@@ -199,8 +275,16 @@ class KhatiyanDB {
     await this.initPromise;
     if (this.serverOnline) {
       try {
-        const res = await fetch(`/api/categories/${id}`, { method: 'DELETE' });
-        if (res.ok) return await res.json();
+        const res = await fetch(`/api/categories/${id}`, {
+          method: 'DELETE',
+          headers: this.getAuthHeaders()
+        });
+        const result = await res.json();
+        if (!res.ok) {
+          return { success: false, error: result.error || 'ক্যাটাগরি মুছে ফেলা ব্যর্থ হয়েছে', status: res.status };
+        }
+        await this.deleteFromStore('categories', Number(id));
+        return result;
       } catch (e) {
         this.serverOnline = false;
       }
@@ -254,6 +338,12 @@ class KhatiyanDB {
         const res = await fetch(`/api/items?${params.toString()}`);
         if (res.ok) {
           const items = await res.json();
+          // Caching to IDB if full list is fetched
+          if (!filters.category_id && !filters.page_number && !filters.search && !filters.start_date && !filters.end_date) {
+            for (const item of items) {
+              await this.putToStore('items', item);
+            }
+          }
           return items;
         }
       } catch (e) {
@@ -305,10 +395,26 @@ class KhatiyanDB {
       try {
         const res = await fetch('/api/items', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: this.getAuthHeaders(),
           body: JSON.stringify(data)
         });
-        if (res.ok) return await res.json();
+        const result = await res.json();
+        if (!res.ok) {
+          return { success: false, error: result.error || 'এন্ট্রি সংরক্ষণ ব্যর্থ হয়েছে', status: res.status };
+        }
+        const createdId = result.id || Date.now();
+        const savedItem = {
+          ...data,
+          id: createdId,
+          quantity: Number(data.quantity) || 1,
+          unit_price: Number(data.unit_price) || 0,
+          total_price: Number(data.total_price) || 0,
+          page_number: Number(data.page_number) || 1,
+          category_id: Number(data.category_id) || 1,
+          created_at: new Date().toISOString()
+        };
+        await this.putToStore('items', savedItem);
+        return result;
       } catch (e) {
         this.serverOnline = false;
       }
@@ -340,10 +446,24 @@ class KhatiyanDB {
       try {
         const res = await fetch(`/api/items/${id}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: this.getAuthHeaders(),
           body: JSON.stringify(data)
         });
-        if (res.ok) return await res.json();
+        const result = await res.json();
+        if (!res.ok) {
+          return { success: false, error: result.error || 'এন্ট্রি আপডেট ব্যর্থ হয়েছে', status: res.status };
+        }
+        const updated = {
+          ...data,
+          id: Number(id),
+          quantity: Number(data.quantity) || 1,
+          unit_price: Number(data.unit_price) || 0,
+          total_price: Number(data.total_price) || 0,
+          page_number: Number(data.page_number) || 1,
+          category_id: Number(data.category_id) || 1
+        };
+        await this.putToStore('items', updated);
+        return result;
       } catch (e) {
         this.serverOnline = false;
       }
@@ -371,8 +491,16 @@ class KhatiyanDB {
     await this.initPromise;
     if (this.serverOnline) {
       try {
-        const res = await fetch(`/api/items/${id}`, { method: 'DELETE' });
-        if (res.ok) return await res.json();
+        const res = await fetch(`/api/items/${id}`, { 
+          method: 'DELETE',
+          headers: this.getAuthHeaders()
+        });
+        const result = await res.json();
+        if (!res.ok) {
+          return { success: false, error: result.error || 'এন্ট্রি ডিলিট ব্যর্থ হয়েছে', status: res.status };
+        }
+        await this.deleteFromStore('items', Number(id));
+        return result;
       } catch (e) {
         this.serverOnline = false;
       }

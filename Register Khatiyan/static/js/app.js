@@ -30,6 +30,7 @@ const App = {
     this.registerPWA();
     await this.loadInitialData();
     this.render();
+    this.updateAuthUI();
 
     // Check URL Hash for deep linking (#page-15 or #new-entry)
     this.handleUrlHash();
@@ -810,6 +811,12 @@ const App = {
 
   // Modal Handlers
   openNewEntryModal(categoryId = null, pageNumber = null) {
+    this.requireAuth(() => {
+      this.showEntryModal(categoryId, pageNumber);
+    });
+  },
+
+  showEntryModal(categoryId = null, pageNumber = null) {
     this.state.editingItemId = null;
     document.getElementById('modal-entry-title').textContent = '➕ নতুন মালামাল ক্রয় এন্ট্রি';
     document.getElementById('form-entry').reset();
@@ -910,11 +917,25 @@ const App = {
       remarks: remarks
     };
 
+    let res;
     if (this.state.editingItemId) {
-      await window.khatiyanDB.updateItem(this.state.editingItemId, payload);
+      res = await window.khatiyanDB.updateItem(this.state.editingItemId, payload);
+    } else {
+      res = await window.khatiyanDB.addItem(payload);
+    }
+
+    if (res && res.error) {
+      if (res.status === 401) {
+        this.openPinModal('অননুমোদিত অনুরোধ! সঠিক অ্যাডমিন পিন দিয়ে আনলক করুন।');
+        return;
+      }
+      alert('ত্রুটি: ' + res.error);
+      return;
+    }
+
+    if (this.state.editingItemId) {
       this.showToast('✅ মালামাল এন্ট্রি সফলভাবে আপডেট হয়েছে!');
     } else {
-      await window.khatiyanDB.addItem(payload);
       this.showToast('✅ নতুন মালামাল সফলভাবে রেজিস্টার খাতায় যুক্ত হয়েছে!');
     }
 
@@ -929,46 +950,64 @@ const App = {
   },
 
   async openEditItemModal(itemId) {
-    const items = await window.khatiyanDB.getItems();
-    const item = items.find(i => i.id == itemId);
-    if (!item) return;
+    this.requireAuth(async () => {
+      const items = await window.khatiyanDB.getItems();
+      const item = items.find(i => i.id == itemId);
+      if (!item) return;
 
-    this.state.editingItemId = itemId;
-    document.getElementById('modal-entry-title').textContent = '✏️ মালামাল এন্ট্রি সম্পাদনা';
+      this.state.editingItemId = itemId;
+      document.getElementById('modal-entry-title').textContent = '✏️ মালামাল এন্ট্রি সম্পাদনা';
 
-    this.populateCategorySelect(item.category_id);
-    document.getElementById('entry-page-num').value = item.page_number;
-    document.getElementById('entry-date').value = item.entry_date;
-    document.getElementById('entry-item-name').value = item.item_name;
-    document.getElementById('entry-spec').value = item.specification || '';
-    document.getElementById('entry-voucher').value = item.voucher_no || '';
-    document.getElementById('entry-qty').value = item.quantity;
-    document.getElementById('entry-unit').value = item.unit || 'পিস';
-    document.getElementById('entry-unit-price').value = item.unit_price;
-    document.getElementById('entry-supplier').value = item.supplier || '';
-    document.getElementById('entry-remarks').value = item.remarks || '';
+      this.populateCategorySelect(item.category_id);
+      document.getElementById('entry-page-num').value = item.page_number;
+      document.getElementById('entry-date').value = item.entry_date;
+      document.getElementById('entry-item-name').value = item.item_name;
+      document.getElementById('entry-spec').value = item.specification || '';
+      document.getElementById('entry-voucher').value = item.voucher_no || '';
+      document.getElementById('entry-qty').value = item.quantity;
+      document.getElementById('entry-unit').value = item.unit || 'পিস';
+      document.getElementById('entry-unit-price').value = item.unit_price;
+      document.getElementById('entry-supplier').value = item.supplier || '';
+      document.getElementById('entry-remarks').value = item.remarks || '';
 
-    this.calculateModalTotal();
-    document.getElementById('modal-entry').classList.remove('hidden');
+      this.calculateModalTotal();
+      document.getElementById('modal-entry').classList.remove('hidden');
+    });
   },
 
   async deleteItem(itemId) {
-    if (confirm('আপনি কি নিশ্চিত যে এই এন্ট্রিটি খাতা থেকে মুছে ফেলতে চান?')) {
-      await window.khatiyanDB.deleteItem(itemId);
-      this.showToast('🗑️ এন্ট্রি সফলভাবে মুছে ফেলা হয়েছে');
-      await this.loadInitialData();
-      if (this.state.viewMode === 'date-filter') {
-        this.loadDateFilteredItems();
-      } else if (this.state.viewMode === 'all-table') {
-        this.renderAllRecordsTable();
-      } else {
-        this.goToPage(this.state.currentPage);
+    this.requireAuth(async () => {
+      if (confirm('আপনি কি নিশ্চিত যে এই এন্ট্রিটি খাতা থেকে মুছে ফেলতে চান?')) {
+        const res = await window.khatiyanDB.deleteItem(itemId);
+        if (res && res.error) {
+          if (res.status === 401) {
+            this.openPinModal('অননুমোদিত অনুরোধ! সঠিক অ্যাডমিন পিন দিন।');
+            return;
+          }
+          alert('ত্রুটি: ' + res.error);
+          return;
+        }
+        this.showToast('🗑️ এন্ট্রি সফলভাবে মুছে ফেলা হয়েছে');
+        await this.loadInitialData();
+        if (this.state.viewMode === 'date-filter') {
+          this.loadDateFilteredItems();
+        } else if (this.state.viewMode === 'all-table') {
+          this.renderAllRecordsTable();
+        } else {
+          this.goToPage(this.state.currentPage);
+        }
       }
-    }
+    });
   },
 
   // Category Modal Handlers
   openCategoryModal(catId = null) {
+    this.requireAuth(() => {
+      this.showCategoryModal(catId);
+    });
+  },
+
+  showCategoryModal(catId = null) {
     this.state.editingCategoryId = catId;
     const modalTitle = document.getElementById('modal-cat-title');
     const form = document.getElementById('form-category');
@@ -1020,11 +1059,25 @@ const App = {
       icon: icon
     };
 
+    let res;
     if (this.state.editingCategoryId) {
-      await window.khatiyanDB.updateCategory(this.state.editingCategoryId, payload);
+      res = await window.khatiyanDB.updateCategory(this.state.editingCategoryId, payload);
+    } else {
+      res = await window.khatiyanDB.addCategory(payload);
+    }
+
+    if (res && res.error) {
+      if (res.status === 401) {
+        this.openPinModal('অননুমোদিত অনুরোধ! সঠিক অ্যাডমিন পিন দিয়ে আনলক করুন।');
+        return;
+      }
+      alert('ত্রুটি: ' + res.error);
+      return;
+    }
+
+    if (this.state.editingCategoryId) {
       this.showToast('✅ ক্যাটাগরি সফলভাবে আপডেট হয়েছে!');
     } else {
-      await window.khatiyanDB.addCategory(payload);
       this.showToast('✅ নতুন মাদার ক্যাটাগরি তৈরি হয়েছে!');
     }
 
@@ -1035,13 +1088,23 @@ const App = {
 
   async handleDeleteCategory() {
     if (!this.state.editingCategoryId) return;
-    if (confirm('সতর্কতা: এই মাদার ক্যাটাগরি মুছে ফেললে এর আওতাধীন সকল এন্ট্রিও মুছে যাবে! আপনি কি মুছে ফেলতে চান?')) {
-      await window.khatiyanDB.deleteCategory(this.state.editingCategoryId);
-      this.showToast('🗑️ ক্যাটাগরি মুছে ফেলা হয়েছে');
-      this.closeModal('modal-category');
-      await this.loadInitialData();
-      this.goToPage(1);
-    }
+    this.requireAuth(async () => {
+      if (confirm('সতর্কতা: এই মাদার ক্যাটাগরি মুছে ফেললে এর আওতাধীন সকল এন্ট্রিও মুছে যাবে! আপনি কি মুছে ফেলতে চান?')) {
+        const res = await window.khatiyanDB.deleteCategory(this.state.editingCategoryId);
+        if (res && res.error) {
+          if (res.status === 401) {
+            this.openPinModal('অননুমোদিত অনুরোধ! সঠিক অ্যাডমিন পিন দিন।');
+            return;
+          }
+          alert('ত্রুটি: ' + res.error);
+          return;
+        }
+        this.showToast('🗑️ ক্যাটাগরি মুছে ফেলা হয়েছে');
+        this.closeModal('modal-category');
+        await this.loadInitialData();
+        this.goToPage(1);
+      }
+    });
   },
 
   // Mobile Connect & QR Code Modal
@@ -1078,65 +1141,338 @@ const App = {
   },
 
   async downloadJsonBackup() {
-    const cats = await window.khatiyanDB.getAllFromStore('categories');
-    const items = await window.khatiyanDB.getAllFromStore('items');
+    try {
+      let backupData = null;
+      if (window.khatiyanDB.serverOnline) {
+        try {
+          const res = await fetch('/api/backup');
+          if (res.ok) {
+            backupData = await res.json();
+          }
+        } catch (e) {
+          console.warn('Server backup fetch error:', e);
+        }
+      }
 
-    const backupData = {
-      app: 'ডিজিটাল খতিয়ান - মালামাল ক্রয় রেজিস্টার খাতা',
-      version: '1.0',
-      export_time: new Date().toISOString(),
-      categories: cats,
-      items: items
-    };
+      if (!backupData) {
+        const cats = await window.khatiyanDB.getAllFromStore('categories');
+        const items = await window.khatiyanDB.getAllFromStore('items');
+        backupData = {
+          app: 'ডিজিটাল খতিয়ান - মালামাল ক্রয় রেজিস্টার খাতা',
+          version: '1.0',
+          export_time: new Date().toISOString(),
+          categories: cats,
+          items: items
+        };
+      }
 
-    const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `khatiyan_backup_${new Date().toISOString().slice(0, 10)}.json`;
-    link.click();
-    this.showToast('💾 ব্যাকআপ ফাইল ডাউনলোড সম্পন্ন হয়েছে');
+      const count = (backupData.items || []).length;
+      const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `khatiyan_backup_${new Date().toISOString().slice(0, 10)}.json`;
+      link.click();
+      this.showToast(`💾 ব্যাকআপ ডাউনলোড সম্পন্ন হয়েছে (${count} টি মালামাল)`);
+    } catch (err) {
+      alert('ব্যাকআপ ডাউনলোডে সমস্যা হয়েছে: ' + err.message);
+    }
   },
 
   handleRestoreFile(e) {
     const file = e.target.files[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      try {
-        const data = JSON.parse(event.target.result);
-        if (!data.categories || !data.items) {
-          alert('ভুল ফরম্যাটের ব্যাকআপ ফাইল');
-          return;
-        }
+    this.requireAuth(() => {
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        try {
+          const data = JSON.parse(event.target.result);
+          if (!data.categories || !data.items) {
+            alert('ভুল ফরম্যাটের ব্যাকআপ ফাইল! categories এবং items ফিল্ড আবশ্যক।');
+            e.target.value = '';
+            return;
+          }
 
-        // Restore to DB
-        if (window.khatiyanDB.serverOnline) {
-          await fetch('/api/restore', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-          });
-        }
+          const catCount = (data.categories || []).length;
+          const itemCount = (data.items || []).length;
+          const confirmMsg = `আপনি কি নিশ্চিত যে এই ব্যাকআপটি রিস্টোর করতে চান?\n\n• ক্যাটাগরি: ${catCount} টি\n• মালামাল এন্ট্রি: ${itemCount} টি\n\n(সতর্কতা: বর্তমান খাতার তথ্য প্রতিস্থাপিত হবে)`;
+          if (!confirm(confirmMsg)) {
+            e.target.value = '';
+            return;
+          }
 
-        // Restore to IndexedDB
-        for (const cat of data.categories) {
-          await window.khatiyanDB.putToStore('categories', cat);
-        }
-        for (const item of data.items) {
-          await window.khatiyanDB.putToStore('items', item);
-        }
+          // Restore to Server DB
+          if (window.khatiyanDB.serverOnline) {
+            const res = await fetch('/api/restore', {
+              method: 'POST',
+              headers: window.khatiyanDB.getAuthHeaders(),
+              body: JSON.stringify(data)
+            });
+            const resData = await res.json();
+            if (!res.ok) {
+              if (res.status === 401) {
+                this.openPinModal('অননুমোদিত অনুরোধ! সঠিক অ্যাডমিন পিন দিয়ে আনলক করুন।');
+                return;
+              }
+              alert('সার্ভার রিস্টোর ব্যর্থ হয়েছে: ' + (resData.error || 'অননুমোদিত'));
+              return;
+            }
+          }
 
-        this.showToast('✅ ব্যাকআপ সফলভাবে রিস্টোর হয়েছে!');
-        this.closeModal('modal-backup');
-        await this.loadInitialData();
-        this.goToPage(1);
-      } catch (err) {
-        alert('ফাইল পড়তে ত্রুটি হয়েছে: ' + err.message);
+          // Clear and Restore to IndexedDB
+          await window.khatiyanDB.clearStore('categories');
+          await window.khatiyanDB.clearStore('items');
+          for (const cat of data.categories) {
+            await window.khatiyanDB.putToStore('categories', cat);
+          }
+          for (const item of data.items) {
+            await window.khatiyanDB.putToStore('items', item);
+          }
+
+          this.showToast(`✅ ব্যাকআপ সফলভাবে রিস্টোর হয়েছে (${itemCount} টি মালামাল)!`);
+          this.closeModal('modal-backup');
+          e.target.value = '';
+          await this.loadInitialData();
+          this.goToPage(1);
+        } catch (err) {
+          alert('ফাইল পড়তে ত্রুটি হয়েছে: ' + err.message);
+          e.target.value = '';
+        }
+      };
+      reader.readAsText(file);
+    });
+  },
+
+  // ------------------ Admin Authentication & PIN ------------------
+  isAuthenticated() {
+    const pin = localStorage.getItem('khatiyan_admin_pin') || sessionStorage.getItem('khatiyan_admin_pin');
+    return !!pin;
+  },
+
+  getStoredPin() {
+    return localStorage.getItem('khatiyan_admin_pin') || sessionStorage.getItem('khatiyan_admin_pin') || '';
+  },
+
+  requireAuth(callback) {
+    if (this.isAuthenticated()) {
+      if (typeof callback === 'function') callback();
+      return true;
+    }
+    this.pendingAuthAction = callback;
+    this.openPinModal();
+    return false;
+  },
+
+  openPinModal(errorMsg = '') {
+    const modal = document.getElementById('modal-auth-pin');
+    if (!modal) return;
+    const pinInput = document.getElementById('auth-pin-input');
+    const errBox = document.getElementById('auth-pin-error');
+    if (pinInput) {
+      pinInput.value = '';
+    }
+    if (errBox) {
+      if (errorMsg) {
+        errBox.textContent = errorMsg;
+        errBox.classList.remove('hidden');
+      } else {
+        errBox.textContent = '';
+        errBox.classList.add('hidden');
       }
-    };
-    reader.readAsText(file);
+    }
+    modal.classList.remove('hidden');
+    setTimeout(() => pinInput?.focus(), 150);
+  },
+
+  closePinModal() {
+    const modal = document.getElementById('modal-auth-pin');
+    if (modal) modal.classList.add('hidden');
+    this.pendingAuthAction = null;
+  },
+
+  async handlePinSubmit(e) {
+    if (e) e.preventDefault();
+    const pinInput = document.getElementById('auth-pin-input');
+    const rememberCheckbox = document.getElementById('auth-pin-remember');
+    const errBox = document.getElementById('auth-pin-error');
+    const submitBtn = document.getElementById('auth-pin-submit-btn');
+
+    const pin = pinInput ? pinInput.value.trim() : '';
+    if (!pin) {
+      if (errBox) {
+        errBox.textContent = 'অনুগ্রহ করে অ্যাডমিন পিন প্রদান করুন';
+        errBox.classList.remove('hidden');
+      }
+      return;
+    }
+
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerText = 'যাচাই হচ্ছে...';
+    }
+
+    try {
+      const res = await window.khatiyanDB.verifyPin(pin);
+      if (res.ok && res.success) {
+        if (rememberCheckbox && rememberCheckbox.checked) {
+          localStorage.setItem('khatiyan_admin_pin', pin);
+        } else {
+          sessionStorage.setItem('khatiyan_admin_pin', pin);
+        }
+        this.updateAuthUI();
+        const action = this.pendingAuthAction;
+        this.closePinModal();
+        this.showToast('🔓 অ্যাডমিন সফলভাবে আনলক হয়েছে!');
+        if (typeof action === 'function') {
+          action();
+        }
+      } else {
+        if (errBox) {
+          errBox.textContent = res.error || 'ভুল পিন! পুনরায় চেষ্টা করুন। (ডিফল্ট: 1234)';
+          errBox.classList.remove('hidden');
+        }
+        if (pinInput) {
+          pinInput.value = '';
+          pinInput.focus();
+        }
+      }
+    } catch (err) {
+      if (errBox) {
+        errBox.textContent = 'ত্রুটি: ' + err.message;
+        errBox.classList.remove('hidden');
+      }
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerText = 'আনলক করুন ➔';
+      }
+    }
+  },
+
+  lockAdmin() {
+    localStorage.removeItem('khatiyan_admin_pin');
+    sessionStorage.removeItem('khatiyan_admin_pin');
+    this.updateAuthUI();
+    this.showToast('🔒 অ্যাডমিন লক করা হয়েছে');
+  },
+
+  updateAuthUI() {
+    const isAuthed = this.isAuthenticated();
+
+    // Badges in header and sidebar
+    const badges = document.querySelectorAll('.auth-status-badge');
+    badges.forEach(badge => {
+      if (isAuthed) {
+        badge.innerHTML = '🔓 আনলক';
+        badge.className = 'auth-status-badge text-2xs font-bold px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/40 inline-flex items-center gap-1';
+      } else {
+        badge.innerHTML = '🔒 লক';
+        badge.className = 'auth-status-badge text-2xs font-bold px-2 py-0.5 rounded-full bg-slate-700/60 text-slate-300 border border-slate-600 inline-flex items-center gap-1';
+      }
+    });
+
+    // Toggle button in header / sidebar
+    const toggleBtns = document.querySelectorAll('.btn-admin-auth-toggle');
+    toggleBtns.forEach(btn => {
+      if (isAuthed) {
+        btn.innerHTML = '<span>🔒</span> <span>লক করুন</span>';
+        btn.title = 'অ্যাডমিন লক করুন';
+        btn.onclick = () => this.lockAdmin();
+      } else {
+        btn.innerHTML = '<span>🔓</span> <span>আনলক</span>';
+        btn.title = 'পিন দিয়ে অ্যাডমিন আনলক করুন';
+        btn.onclick = () => this.openPinModal();
+      }
+    });
+
+    // Change pin button visibility
+    const changePinBtns = document.querySelectorAll('.btn-change-pin');
+    changePinBtns.forEach(btn => {
+      btn.style.display = isAuthed ? 'flex' : 'none';
+    });
+  },
+
+  openChangePinModal() {
+    this.requireAuth(() => {
+      const modal = document.getElementById('modal-change-pin');
+      if (!modal) return;
+      document.getElementById('old-pin-input').value = this.getStoredPin();
+      document.getElementById('new-pin-input').value = '';
+      document.getElementById('confirm-pin-input').value = '';
+      const errBox = document.getElementById('change-pin-error');
+      if (errBox) errBox.classList.add('hidden');
+      modal.classList.remove('hidden');
+    });
+  },
+
+  closeChangePinModal() {
+    const modal = document.getElementById('modal-change-pin');
+    if (modal) modal.classList.add('hidden');
+  },
+
+  async handleChangePinSubmit(e) {
+    if (e) e.preventDefault();
+    const oldPin = document.getElementById('old-pin-input').value.trim();
+    const newPin = document.getElementById('new-pin-input').value.trim();
+    const confirmPin = document.getElementById('confirm-pin-input').value.trim();
+    const errBox = document.getElementById('change-pin-error');
+    const submitBtn = document.getElementById('change-pin-submit-btn');
+
+    if (!oldPin) {
+      if (errBox) {
+        errBox.textContent = 'বর্তমান পিন দিন';
+        errBox.classList.remove('hidden');
+      }
+      return;
+    }
+    if (!newPin || newPin.length < 4) {
+      if (errBox) {
+        errBox.textContent = 'নতুন পিন কমপক্ষে ৪ সংখ্যার হতে হবে';
+        errBox.classList.remove('hidden');
+      }
+      return;
+    }
+    if (newPin !== confirmPin) {
+      if (errBox) {
+        errBox.textContent = 'নতুন পিন ও কনফার্ম পিন মেলেনি!';
+        errBox.classList.remove('hidden');
+      }
+      return;
+    }
+
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerText = 'পরিবর্তন হচ্ছে...';
+    }
+
+    try {
+      const res = await window.khatiyanDB.changePin(oldPin, newPin);
+      if (res.ok && res.success) {
+        if (localStorage.getItem('khatiyan_admin_pin')) {
+          localStorage.setItem('khatiyan_admin_pin', newPin);
+        } else {
+          sessionStorage.setItem('khatiyan_admin_pin', newPin);
+        }
+        this.closeChangePinModal();
+        this.showToast('✅ অ্যাডমিন পিন সফলভাবে পরিবর্তন করা হয়েছে!');
+      } else {
+        if (errBox) {
+          errBox.textContent = res.error || 'পিন পরিবর্তন ব্যর্থ হয়েছে!';
+          errBox.classList.remove('hidden');
+        }
+      }
+    } catch (err) {
+      if (errBox) {
+        errBox.textContent = 'ত্রুটি: ' + err.message;
+        errBox.classList.remove('hidden');
+      }
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerText = 'পিন পরিবর্তন করুন';
+      }
+    }
   },
 
   async exportExcel() {
@@ -1273,6 +1609,8 @@ const App = {
     document.getElementById('form-category')?.addEventListener('submit', (e) => this.handleSaveCategory(e));
     document.getElementById('cat-delete-btn')?.addEventListener('click', () => this.handleDeleteCategory());
     document.getElementById('restore-file-input')?.addEventListener('change', (e) => this.handleRestoreFile(e));
+    document.getElementById('form-auth-pin')?.addEventListener('submit', (e) => this.handlePinSubmit(e));
+    document.getElementById('form-change-pin')?.addEventListener('submit', (e) => this.handleChangePinSubmit(e));
 
     // Keyboard Shortcuts: Left / Right arrows to flip pages
     window.addEventListener('keydown', (e) => {
