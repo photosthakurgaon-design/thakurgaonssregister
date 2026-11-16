@@ -35,12 +35,12 @@
   <!-- ========================================== -->
   <!-- LEFT SIDEBAR                               -->
   <!-- ========================================== -->
-  <aside id="app-sidebar" class="no-print fixed lg:sticky top-0 left-0 z-50 h-screen w-64 bg-teal-950 text-white flex flex-col justify-between border-r-2 border-teal-800 shadow-2xl transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out shrink-0 overflow-y-auto">
+  <aside id="app-sidebar" class="no-print fixed lg:sticky top-0 left-0 z-50 h-screen w-64 bg-teal-950 text-white flex flex-col justify-between border-r-2 border-teal-800 shadow-2xl transition-all duration-300 ease-in-out shrink-0 overflow-y-auto">
     
     <div>
       <!-- 1. Logo & Title -->
       <div class="p-4 sm:p-5 border-b border-teal-800/80 flex items-center justify-between">
-        <div class="flex items-center gap-3 cursor-pointer" onclick="App.goToPage(1); App.closeSidebar();">
+        <div class="flex items-center gap-3 cursor-pointer" onclick="App.goHome()">
           <div class="w-10 h-10 rounded-xl bg-teal-800 border border-teal-600 flex items-center justify-center text-2xl shadow-inner">
             📖
           </div>
@@ -54,9 +54,10 @@
             </p>
           </div>
         </div>
-        <!-- Close button on mobile -->
-        <button onclick="App.closeSidebar()" class="lg:hidden text-teal-300 hover:text-white p-1 text-xl font-bold">
-          ✕
+        <!-- Close / Hide button for both mobile and desktop -->
+        <button onclick="App.toggleSidebar()" class="text-teal-300 hover:text-white hover:bg-teal-900 p-1.5 rounded-lg text-lg font-bold transition flex items-center gap-1 cursor-pointer" title="মেন্যু হাইড / বন্ধ করুন">
+          <span>✕</span>
+          <span class="text-xs font-semibold hidden lg:inline">হাইড</span>
         </button>
       </div>
 
@@ -81,29 +82,35 @@
       <!-- 4. Navigation Menu Items -->
       <nav class="px-3 py-1 space-y-1 text-sm font-semibold">
         
-        <!-- ১. ১ম পৃষ্ঠা: সূচিপত্র -->
-        <button onclick="App.goToPage(1); App.closeSidebar();" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-teal-900 text-teal-100 hover:text-white transition text-left group cursor-pointer">
-          <span class="text-xl">📖</span>
-          <span class="flex-1 font-bold">১ম পৃষ্ঠা: সূচিপত্র</span>
-          <span class="text-2xs bg-teal-900 group-hover:bg-teal-800 text-amber-300 px-2 py-0.5 rounded-full font-bold">ইনডেক্স</span>
+        <!-- ০. হোম পেজ (সূচিপত্র) -->
+        <button onclick="App.goHome()" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-teal-900 text-teal-100 hover:text-white transition text-left group cursor-pointer">
+          <span class="text-xl">🏠</span>
+          <span class="flex-1 font-bold">হোম (সূচিপত্র)</span>
+          <span class="text-2xs bg-teal-900 group-hover:bg-teal-800 text-amber-300 px-2 py-0.5 rounded-full font-bold">১ম পৃষ্ঠা</span>
         </button>
 
-        <!-- ২. নতুন মাদার ক্যাটাগরি তৈরি বাটন -->
+        <!-- ১. তারিখ অনুযায়ী ফিল্টার বাটন -->
+        <button onclick="App.openDateFilterView()" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-teal-900 text-amber-300 hover:text-amber-200 transition text-left cursor-pointer group">
+          <span class="text-xl">📅</span>
+          <span class="flex-1 font-bold">তারিখ অনুযায়ী ফিল্টার</span>
+        </button>
+
+        <!-- ২. সকল মালামালের তালিকা -->
+        <button onclick="App.toggleAllRecordsView(); App.closeSidebar();" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-teal-900 text-teal-100 hover:text-white transition text-left cursor-pointer">
+          <span class="text-xl">📋</span>
+          <span class="flex-1 font-bold">সকল মালামালের তালিকা</span>
+        </button>
+
+        <!-- ৩. নতুন মাদার ক্যাটাগরি তৈরি বাটন -->
         <button onclick="App.openCategoryModal(); App.closeSidebar();" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-teal-900 text-emerald-300 hover:text-white transition text-left cursor-pointer">
           <span class="text-xl">➕</span>
           <span class="flex-1 font-bold">নতুন মাদার ক্যাটাগরি</span>
         </button>
 
-        <!-- ৩. সূচিপত্র প্রিন্ট বাটন -->
+        <!-- ৪. সূচিপত্র প্রিন্ট বাটন -->
         <button onclick="App.printMasterIndex(); App.closeSidebar();" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-teal-900 text-teal-100 hover:text-white transition text-left cursor-pointer">
           <span class="text-xl">🖨️</span>
           <span class="flex-1 font-bold">সূচিপত্র প্রিন্ট</span>
-        </button>
-
-        <!-- ৪. সকল মালামালের তালিকা -->
-        <button onclick="App.toggleAllRecordsView(); App.closeSidebar();" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-teal-900 text-teal-100 hover:text-white transition text-left cursor-pointer">
-          <span class="text-xl">📋</span>
-          <span class="flex-1 font-bold">সকল মালামালের তালিকা</span>
         </button>
 
         <!-- ৫. খাতা প্রিন্ট করুন (চলতি পৃষ্ঠা) -->
@@ -150,23 +157,29 @@
 
     <!-- TOP HEADER / NAVIGATION -->
     <header id="app-header" class="no-print bg-teal-900 text-white shadow-md sticky top-0 z-30 px-3 sm:px-6 py-2.5 border-b border-teal-800">
-      <div class="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-4">
+      <div class="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-3">
         
-        <!-- Left: Menu toggle button -->
-        <div class="flex items-center gap-2.5 shrink-0">
-          <button onclick="App.toggleSidebar()" class="p-2 rounded-xl bg-teal-800 hover:bg-teal-700 text-white transition shadow-sm flex items-center gap-1.5 cursor-pointer" title="মেন্যু খুলুন / বন্ধ করুন">
+        <!-- Left: Menu toggle button & Home button -->
+        <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <button onclick="App.toggleSidebar()" class="p-2 rounded-xl bg-teal-800 hover:bg-teal-700 text-white transition shadow-sm flex items-center gap-1.5 cursor-pointer" title="বামপাশের মেন্যু লুকান / দেখান">
             <span class="text-xl leading-none font-bold">☰</span>
-            <span class="text-xs font-bold hidden sm:inline">মেন্যু</span>
+            <span class="text-xs font-bold hidden md:inline">মেন্যু</span>
           </button>
           
-          <div class="hidden sm:block">
+          <!-- Home Button -->
+          <button onclick="App.goHome()" class="p-2 px-2.5 sm:px-3 rounded-xl bg-teal-800 hover:bg-teal-700 text-amber-300 hover:text-amber-200 transition shadow-sm flex items-center gap-1.5 cursor-pointer border border-teal-700" title="হোম পেজ (সূচিপত্র)">
+            <span class="text-lg leading-none">🏠</span>
+            <span class="text-xs font-bold hidden sm:inline text-white">হোম</span>
+          </button>
+          
+          <div class="hidden lg:block ml-1">
             <h2 class="text-sm font-bold text-white leading-tight">ডিজিটাল খতিয়ান</h2>
             <p class="text-2xs text-teal-200">মালামাল ক্রয় রেজিস্টার</p>
           </div>
         </div>
 
         <!-- Center: BIG, WIDE, HIGH-CONTRAST SEARCH BOX -->
-        <div class="flex-1 max-w-2xl mx-1 sm:mx-4">
+        <div class="flex-1 max-w-2xl mx-1 sm:mx-3">
           <div class="relative w-full">
             <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-teal-700 pointer-events-none text-lg">
               🔍
@@ -189,8 +202,19 @@
           </div>
         </div>
 
+        <!-- Red Marked Area: Print Button in Header -->
+        <button 
+          id="header-top-print-btn" 
+          onclick="App.printCurrentView()" 
+          class="flex items-center gap-1.5 bg-teal-800 hover:bg-teal-700 active:bg-teal-900 text-teal-100 hover:text-white px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl border border-teal-600 shadow-sm transition font-bold text-xs sm:text-sm cursor-pointer shrink-0"
+          title="চলতি পৃষ্ঠা বা সূচিপত্র প্রিন্ট করুন"
+        >
+          <span class="text-base sm:text-lg">🖨️</span>
+          <span class="hidden md:inline">প্রিন্ট</span>
+        </button>
+
         <!-- Right: Current Page Quick Indicator & Quick Flip -->
-        <div class="flex items-center gap-1.5 bg-teal-950 px-3 py-1.5 rounded-xl border border-teal-700 shadow-inner shrink-0">
+        <div class="flex items-center gap-1 sm:gap-1.5 bg-teal-950 px-2 sm:px-3 py-1.5 rounded-xl border border-teal-700 shadow-inner shrink-0">
           <button type="button" onclick="App.prevPage()" class="p-1 text-teal-300 hover:text-white hover:bg-teal-800 rounded transition text-xs font-bold cursor-pointer" title="আগের পৃষ্ঠা">
             ◀
           </button>
@@ -416,6 +440,199 @@
           </tbody>
         </table>
       </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- VIEW 4: DATE RANGE FILTER & REPORT VIEW   -->
+    <!-- ========================================== -->
+    <div id="view-date-filter" class="hidden space-y-4">
+      
+      <!-- Top Header Card -->
+      <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div>
+          <h3 class="text-lg sm:text-xl font-extrabold text-teal-950 flex items-center gap-2">
+            <span>📅</span> তারিখ অনুযায়ী মালামাল ক্রয়ের ফিল্টার ও হিসাব
+          </h3>
+          <p class="text-xs sm:text-sm text-slate-500 mt-0.5">
+            নির্দিষ্ট তারিখ টু তারিখের সকল মালামাল ক্রয়ের তালিকা ও অফিশিয়াল প্রিন্ট রিপোর্ট
+          </p>
+        </div>
+        
+        <div class="flex items-center gap-2 shrink-0">
+          <button onclick="App.printDateFilterReport()" class="bg-teal-800 hover:bg-teal-900 active:scale-95 text-white font-bold px-3.5 py-2 rounded-xl text-xs sm:text-sm shadow transition flex items-center gap-1.5 cursor-pointer">
+            <span class="text-base">🖨️</span> এই তালিকা প্রিন্ট করুন
+          </button>
+          <button onclick="App.exportDateFilterExcel()" class="bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white font-bold px-3 py-2 rounded-xl text-xs sm:text-sm shadow transition flex items-center gap-1.5 cursor-pointer">
+            <span class="text-base">📊</span> এক্সেল
+          </button>
+        </div>
+      </div>
+
+      <!-- Date Filter Inputs & Quick Presets Panel -->
+      <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200">
+        <form onsubmit="App.applyDateFilter(event)" class="space-y-3">
+          
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
+            
+            <!-- 1. Start Date -->
+            <div>
+              <label for="filter-start-date" class="block text-xs font-bold text-slate-700 mb-1">
+                📅 শুরুর তারিখ (হতে)
+              </label>
+              <input 
+                type="date" 
+                id="filter-start-date" 
+                class="w-full px-3 py-2 border-2 border-teal-500 focus:border-amber-400 rounded-xl text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-300 transition"
+              >
+            </div>
+
+            <!-- 2. End Date -->
+            <div>
+              <label for="filter-end-date" class="block text-xs font-bold text-slate-700 mb-1">
+                📅 শেষের তারিখ (পর্যন্ত)
+              </label>
+              <input 
+                type="date" 
+                id="filter-end-date" 
+                class="w-full px-3 py-2 border-2 border-teal-500 focus:border-amber-400 rounded-xl text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-300 transition"
+              >
+            </div>
+
+            <!-- 3. Category (Optional Filter) -->
+            <div>
+              <label for="filter-category-select" class="block text-xs font-bold text-slate-700 mb-1">
+                📦 মাদার ক্যাটাগরি (ঐচ্ছিক)
+              </label>
+              <select 
+                id="filter-category-select" 
+                class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-teal-600 focus:outline-none"
+              >
+                <option value="">সকল ক্যাটাগরি</option>
+              </select>
+            </div>
+
+            <!-- 4. Action Buttons -->
+            <div class="flex items-center gap-2">
+              <button 
+                type="submit" 
+                class="flex-1 py-2 px-4 bg-teal-800 hover:bg-teal-900 active:scale-95 text-white font-bold rounded-xl text-sm shadow-md transition flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <span>🔍</span> ফিল্টার
+              </button>
+              <button 
+                type="button" 
+                onclick="App.resetDateFilter()" 
+                class="py-2 px-3 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-semibold rounded-xl text-sm border border-slate-300 transition flex items-center justify-center gap-1 cursor-pointer"
+                title="ফিল্টার রিসেট করুন"
+              >
+                <span>🔄</span> রিসেট
+              </button>
+            </div>
+
+          </div>
+
+          <!-- Quick Date Range Preset Buttons -->
+          <div class="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-1.5 text-xs">
+            <span class="text-xs font-bold text-slate-500 mr-1">⚡ কুইক ফিল্টার:</span>
+            <button type="button" onclick="App.setDatePreset('today')" class="px-2.5 py-1 bg-slate-100 hover:bg-teal-100 hover:text-teal-900 text-slate-700 font-semibold rounded-lg border border-slate-200 transition">
+              আজকে
+            </button>
+            <button type="button" onclick="App.setDatePreset('7days')" class="px-2.5 py-1 bg-slate-100 hover:bg-teal-100 hover:text-teal-900 text-slate-700 font-semibold rounded-lg border border-slate-200 transition">
+              গত ৭ দিন
+            </button>
+            <button type="button" onclick="App.setDatePreset('this_month')" class="px-2.5 py-1 bg-slate-100 hover:bg-teal-100 hover:text-teal-900 text-slate-700 font-semibold rounded-lg border border-slate-200 transition">
+              চলতি মাস
+            </button>
+            <button type="button" onclick="App.setDatePreset('last_month')" class="px-2.5 py-1 bg-slate-100 hover:bg-teal-100 hover:text-teal-900 text-slate-700 font-semibold rounded-lg border border-slate-200 transition">
+              গত মাস
+            </button>
+            <button type="button" onclick="App.setDatePreset('this_year')" class="px-2.5 py-1 bg-slate-100 hover:bg-teal-100 hover:text-teal-900 text-slate-700 font-semibold rounded-lg border border-slate-200 transition">
+              চলতি বছর
+            </button>
+            <button type="button" onclick="App.setDatePreset('all')" class="px-2.5 py-1 bg-slate-100 hover:bg-teal-100 hover:text-teal-900 text-slate-700 font-semibold rounded-lg border border-slate-200 transition">
+              সব সময়
+            </button>
+          </div>
+
+        </form>
+      </div>
+
+      <!-- Filtered Summary Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex items-center justify-between">
+          <div>
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">উক্ত সময়ে মোট ব্যয়</p>
+            <h3 id="date-filter-total" class="text-xl sm:text-2xl font-black text-teal-900 mt-0.5">৳ ০.০০</h3>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center text-xl">💰</div>
+        </div>
+
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex items-center justify-between">
+          <div>
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">মোট মালামাল সংখ্যা</p>
+            <h3 id="date-filter-count" class="text-xl sm:text-2xl font-black text-slate-800 mt-0.5">০ টি</h3>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center text-xl">📦</div>
+        </div>
+
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex items-center justify-between">
+          <div>
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">ভাউচার সংখ্যা</p>
+            <h3 id="date-filter-vouchers" class="text-xl sm:text-2xl font-black text-slate-800 mt-0.5">০ টি</h3>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center text-xl">📄</div>
+        </div>
+
+      </div>
+
+      <!-- Active Range Badge & Info -->
+      <div class="flex items-center justify-between px-2 text-xs font-bold text-slate-600">
+        <div class="flex items-center gap-1.5">
+          <span>নির্বাচিত সময়সীমা:</span>
+          <span id="date-filter-active-range-label" class="bg-teal-100 text-teal-900 px-2 py-0.5 rounded-full font-black">
+            চলতি মাস
+          </span>
+        </div>
+        <button onclick="App.printDateFilterReport()" class="text-teal-800 hover:text-teal-950 hover:underline flex items-center gap-1 cursor-pointer">
+          <span>🖨️ প্রিন্ট প্রিভিউ</span>
+        </button>
+      </div>
+
+      <!-- Authentic Ledger Table for Date Range Results -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-x-auto">
+        <table class="table-ledger compact-ledger w-full">
+          <thead>
+            <tr>
+              <th class="nowrap-cell">ক্র: নং</th>
+              <th class="nowrap-cell">পৃষ্ঠা নং</th>
+              <th class="nowrap-cell">তারিখ</th>
+              <th>মাদার ক্যাটাগরি</th>
+              <th>পণ্যের বিবরণ ও স্পেসিফিকেশন</th>
+              <th class="nowrap-cell">ভাউচার</th>
+              <th class="nowrap-cell">পরিমাণ</th>
+              <th class="nowrap-cell">দর (৳)</th>
+              <th class="nowrap-cell">মোট টাকা (৳)</th>
+              <th class="nowrap-cell">অ্যাকশন</th>
+            </tr>
+          </thead>
+          <tbody id="date-filter-table-body">
+            <!-- Dynamically populated -->
+          </tbody>
+          <tfoot>
+            <tr class="bg-teal-50/80 font-bold border-t-2 border-teal-800 text-slate-900">
+              <td colspan="8" class="text-right py-2.5 px-4 text-xs sm:text-sm font-bold text-teal-950">
+                উক্ত সময়কালের সর্বমোট খরচ (Total):
+              </td>
+              <td id="date-filter-footer-total" class="nowrap-cell text-right py-2.5 px-3 text-sm sm:text-base font-extrabold text-teal-900">
+                ৳ ০.০০
+              </td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
     </div>
 
   </main>
@@ -689,29 +906,35 @@
   <!-- ========================================== -->
   <!-- MOBILE BOTTOM BAR (Visible only on mobile) -->
   <!-- ========================================== -->
-  <div id="bottom-mobile-nav" class="no-print sm:hidden fixed bottom-0 inset-x-0 bg-white border-t border-slate-200 px-4 py-2 z-40 flex items-center justify-around shadow-lg">
-    <button onclick="App.goToPage(1)" class="flex flex-col items-center text-teal-800 font-semibold text-xs">
-      <span class="text-xl">📖</span>
-      <span>সূচিপত্র</span>
+  <div id="bottom-mobile-nav" class="no-print sm:hidden fixed bottom-0 inset-x-0 bg-white border-t border-slate-200 px-2 py-1.5 z-40 flex items-center justify-around shadow-lg">
+    <!-- 1. Home Button -->
+    <button onclick="App.goHome()" class="flex flex-col items-center justify-center text-teal-800 hover:text-teal-950 font-semibold text-xs py-1 transition cursor-pointer" title="হোম পেজ">
+      <span class="text-xl leading-tight">🏠</span>
+      <span class="text-2xs sm:text-xs mt-0.5 font-bold">হোম</span>
     </button>
-    <button onclick="App.prevPage()" class="flex flex-col items-center text-slate-600 font-semibold text-xs">
-      <span class="text-xl">⬅️</span>
-      <span>আগের পৃষ্ঠা</span>
+
+    <!-- 2. Prev Page -->
+    <button onclick="App.prevPage()" class="flex flex-col items-center justify-center text-slate-600 hover:text-slate-800 font-semibold text-xs py-1 transition cursor-pointer" title="আগের পৃষ্ঠা">
+      <span class="text-xl leading-tight">⬅️</span>
+      <span class="text-2xs sm:text-xs mt-0.5">আগের পৃষ্ঠা</span>
     </button>
-    <!-- Floating Add Button -->
-    <button onclick="App.openNewEntryModal()" class="flex flex-col items-center -mt-6">
-      <div class="w-13 h-13 rounded-full bg-amber-500 hover:bg-amber-600 text-teal-950 flex items-center justify-center text-2xl font-black shadow-lg border-4 border-white">
-        +
-      </div>
-      <span class="text-2xs font-bold text-teal-950 mt-0.5">নতুন এন্ট্রি</span>
+
+    <!-- 3. New Entry (Same level as other buttons) -->
+    <button onclick="App.openNewEntryModal()" class="flex flex-col items-center justify-center text-amber-600 hover:text-amber-700 font-bold text-xs py-1 transition cursor-pointer" title="নতুন মালামাল এন্ট্রি">
+      <span class="text-xl leading-tight">➕</span>
+      <span class="text-2xs sm:text-xs mt-0.5 font-black text-amber-700">নতুন এন্ট্রি</span>
     </button>
-    <button onclick="App.nextPage()" class="flex flex-col items-center text-slate-600 font-semibold text-xs">
-      <span class="text-xl">➡️</span>
-      <span>পরের পৃষ্ঠা</span>
+
+    <!-- 4. Next Page -->
+    <button onclick="App.nextPage()" class="flex flex-col items-center justify-center text-slate-600 hover:text-slate-800 font-semibold text-xs py-1 transition cursor-pointer" title="পরের পৃষ্ঠা">
+      <span class="text-xl leading-tight">➡️</span>
+      <span class="text-2xs sm:text-xs mt-0.5">পরের পৃষ্ঠা</span>
     </button>
-    <button onclick="App.toggleAllRecordsView()" class="flex flex-col items-center text-slate-600 font-semibold text-xs">
-      <span class="text-xl">📋</span>
-      <span>তালিকা</span>
+
+    <!-- 5. All Records / Table -->
+    <button onclick="App.toggleAllRecordsView()" class="flex flex-col items-center justify-center text-slate-600 hover:text-slate-800 font-semibold text-xs py-1 transition cursor-pointer" title="সকল মালামালের তালিকা">
+      <span class="text-xl leading-tight">📋</span>
+      <span class="text-2xs sm:text-xs mt-0.5">তালিকা</span>
     </button>
   </div>
 

@@ -27,8 +27,27 @@ const PrintManager = {
     return '৳ ' + num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   },
 
+  // Set Print Orientation (portrait | landscape)
+  setPrintOrientation(orientation = 'portrait') {
+    let el = document.getElementById('print-orientation-style');
+    if (!el) {
+      el = document.createElement('style');
+      el.id = 'print-orientation-style';
+      document.head.appendChild(el);
+    }
+    el.innerHTML = `@page { size: A4 ${orientation} !important; margin: 8mm 8mm 10mm 8mm !important; }`;
+    if (orientation === 'landscape') {
+      document.body.classList.add('print-landscape');
+      document.body.classList.remove('print-portrait');
+    } else {
+      document.body.classList.add('print-portrait');
+      document.body.classList.remove('print-landscape');
+    }
+  },
+
   // Trigger Print of Current Ledger Page
   printCurrentPage(pageNumber, category, items) {
+    this.setPrintOrientation('landscape');
     const printArea = document.getElementById('printable-area');
     if (!printArea) return;
 
@@ -116,8 +135,170 @@ const PrintManager = {
     window.print();
   },
 
+  // Trigger Print of All Records / Search Results
+  printAllRecords(items, searchQuery) {
+    this.setPrintOrientation('portrait');
+    const printArea = document.getElementById('printable-area');
+    if (!printArea) return;
+
+    const totalAmount = items.reduce((sum, item) => sum + (Number(item.total_price) || 0), 0);
+
+    let rowsHtml = '';
+    items.forEach((item, idx) => {
+      rowsHtml += `
+        <tr>
+          <td style="text-align: center;">${idx + 1}</td>
+          <td style="text-align: center;">পৃষ্ঠা ${item.page_number || '-'}</td>
+          <td style="text-align: center;">${item.category_name_bn || item.category_name || '-'}</td>
+          <td style="text-align: center;">${this.formatDate(item.entry_date)}</td>
+          <td><strong>${item.item_name}</strong>${item.specification ? `<br><small style="color:#555;">${item.specification}</small>` : ''}</td>
+          <td style="text-align: center;">${item.voucher_no || '-'}</td>
+          <td style="text-align: center;">${item.quantity} ${item.unit || ''}</td>
+          <td style="text-align: right;">৳ ${(Number(item.unit_price) || 0).toFixed(2)}</td>
+          <td style="text-align: right;"><strong>৳ ${(Number(item.total_price) || 0).toFixed(2)}</strong></td>
+        </tr>
+      `;
+    });
+
+    printArea.innerHTML = `
+      <div class="print-header">
+        <h1>মালামাল ক্রয় ও মজুত রেজিস্টার খাতা</h1>
+        <h2>সকল মালামালের তালিকা ${searchQuery ? `(সার্চ: "${searchQuery}")` : ''}</h2>
+        <div class="print-meta-grid">
+          <div><strong>মোট রেকর্ড:</strong> ${items.length} টি</div>
+          <div><strong>সর্বমোট ব্যয়:</strong> ${this.formatCurrency(totalAmount)}</div>
+          <div><strong>প্রিন্টের তারিখ:</strong> ${new Date().toLocaleDateString('bn-BD')}</div>
+        </div>
+      </div>
+
+      <table class="table-ledger">
+        <thead>
+          <tr>
+            <th style="width: 5%;">ক্র: নং</th>
+            <th style="width: 9%;">পৃষ্ঠা নং</th>
+            <th style="width: 16%;">মাদার ক্যাটাগরি</th>
+            <th style="width: 10%;">তারিখ</th>
+            <th style="width: 26%;">পণ্যের বিবরণ</th>
+            <th style="width: 10%;">ভাউচার</th>
+            <th style="width: 8%;">পরিমাণ</th>
+            <th style="width: 8%;">দর (৳)</th>
+            <th style="width: 10%;">মোট টাকা (৳)</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rowsHtml}
+        </tbody>
+        <tfoot>
+          <tr style="background-color: #f1f5f9; font-weight: bold; border-top: 2pt solid #000;">
+            <td colspan="8" style="text-align: right; padding-right: 12px;">সর্বমোট খরচ:</td>
+            <td style="text-align: right; font-size: 11pt; color: #000;">${this.formatCurrency(totalAmount)}</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <div class="print-signature-area" style="margin-top: 40px;">
+        <div class="signature-block">হিসাব রক্ষক / প্রস্তুতকারী</div>
+        <div class="signature-block">যাচাইকারী / নিরীক্ষক</div>
+        <div class="signature-block">উর্ধ্বতন কর্তৃপক্ষ</div>
+      </div>
+    `;
+
+    window.print();
+  },
+
+  // Trigger Print of Date Range Filtered Report
+  printDateRangeReport(items, startDate, endDate, categoryName) {
+    this.setPrintOrientation('portrait');
+    const printArea = document.getElementById('printable-area');
+    if (!printArea) return;
+
+    const totalAmount = items.reduce((sum, item) => sum + (Number(item.total_price) || 0), 0);
+    const dateRangeLabel = (startDate && endDate) 
+      ? `${this.formatDate(startDate)} হতে ${this.formatDate(endDate)}`
+      : (startDate ? `${this.formatDate(startDate)} হতে পরবর্তী` : (endDate ? `${this.formatDate(endDate)} পর্যন্ত` : 'সকল তারিখ'));
+
+    let rowsHtml = '';
+    items.forEach((item, idx) => {
+      const specPart = item.specification ? ` <span style="font-weight: normal; color: #475569; font-size: 7.5pt;">(${item.specification})</span>` : '';
+      const supplierPart = item.supplier ? `<strong style="color: #0f172a;">${item.supplier}</strong>` : '';
+      const remarksPart = item.remarks ? `<span style="color: #475569; font-size: 7.5pt;">${item.supplier ? ' - ' : ''}${item.remarks}</span>` : '';
+      const supplierRemarks = (supplierPart || remarksPart) ? `${supplierPart}${remarksPart}` : '-';
+
+      rowsHtml += `
+        <tr>
+          <td class="nowrap-cell" style="text-align: center;">${idx + 1}</td>
+          <td class="nowrap-cell" style="text-align: center;">পৃষ্ঠা ${item.page_number || '-'}</td>
+          <td class="nowrap-cell" style="text-align: center;">${this.formatDate(item.entry_date)}</td>
+          <td style="font-size: 8pt; white-space: normal;">${item.category_name_bn || item.category_name || '-'}</td>
+          <td style="font-size: 8.5pt; line-height: 1.2;">
+            <span style="font-weight: 700; color: #0f172a;">${item.item_name}</span>${specPart}
+          </td>
+          <td class="nowrap-cell" style="text-align: center; font-size: 8pt;">${item.voucher_no || '-'}</td>
+          <td class="nowrap-cell" style="text-align: center; font-weight: 600;">${item.quantity} ${item.unit || ''}</td>
+          <td class="nowrap-cell" style="text-align: right;">৳ ${(Number(item.unit_price) || 0).toFixed(2)}</td>
+          <td class="nowrap-cell" style="text-align: right; font-weight: 800;">৳ ${(Number(item.total_price) || 0).toFixed(2)}</td>
+          <td style="font-size: 8pt; line-height: 1.2;">${supplierRemarks}</td>
+        </tr>
+      `;
+    });
+
+    if (items.length === 0) {
+      rowsHtml = `<tr><td colspan="10" style="text-align: center; padding: 20px;">উক্ত সময়সীমার মধ্যে কোনো মালামাল এন্ট্রি করা হয়নি।</td></tr>`;
+    }
+
+    printArea.innerHTML = `
+      <div class="print-header">
+        <h1>মালামাল ক্রয় ও মজুত রেজিস্টার খাতা</h1>
+        <h2>তারিখ অনুযায়ী মালামাল ক্রয়ের বিবরণী</h2>
+        ${categoryName ? `<p style="font-size: 11pt; color: #1e293b; margin-top: 4px;"><strong>ক্যাটাগরি:</strong> ${categoryName}</p>` : ''}
+        <div class="print-meta-grid">
+          <div><strong>সময়সীমা:</strong> ${dateRangeLabel}</div>
+          <div><strong>মোট রেকর্ড:</strong> ${items.length} টি</div>
+          <div><strong>সর্বমোট ব্যয়:</strong> ${this.formatCurrency(totalAmount)}</div>
+          <div><strong>প্রিন্টের তারিখ:</strong> ${new Date().toLocaleDateString('bn-BD')}</div>
+        </div>
+      </div>
+
+      <table class="table-ledger table-compact">
+        <thead>
+          <tr>
+            <th class="nowrap-cell">ক্র: নং</th>
+            <th class="nowrap-cell">পৃষ্ঠা</th>
+            <th class="nowrap-cell">তারিখ</th>
+            <th>মাদার ক্যাটাগরি</th>
+            <th>মালের বিবরণ ও স্পেসিফিকেশন</th>
+            <th class="nowrap-cell">ভাউচার</th>
+            <th class="nowrap-cell">পরিমাণ</th>
+            <th class="nowrap-cell">দর (৳)</th>
+            <th class="nowrap-cell">মোট টাকা (৳)</th>
+            <th>দোকান / মন্তব্য</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rowsHtml}
+        </tbody>
+        <tfoot>
+          <tr style="background-color: #f1f5f9; font-weight: bold; border-top: 1.5pt solid #000;">
+            <td colspan="8" style="text-align: right; padding-right: 8px; font-weight: bold;">উক্ত সময়কালের সর্বমোট খরচ (Total):</td>
+            <td class="nowrap-cell" style="text-align: right; font-weight: 800; font-size: 9.5pt; color: #000;">${this.formatCurrency(totalAmount)}</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <div class="print-signature-area" style="margin-top: 25px;">
+        <div class="signature-block">হিসাব রক্ষক / প্রস্তুতকারী</div>
+        <div class="signature-block">যাচাইকারী / নিরীক্ষক</div>
+        <div class="signature-block">উর্ধ্বতন কর্তৃপক্ষ</div>
+      </div>
+    `;
+
+    window.print();
+  },
+
   // Trigger Print of Master Index (Page 1)
   printMasterIndex(categories) {
+    this.setPrintOrientation('portrait');
     const printArea = document.getElementById('printable-area');
     if (!printArea) return;
 

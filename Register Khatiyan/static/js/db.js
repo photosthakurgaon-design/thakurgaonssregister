@@ -289,6 +289,12 @@ class KhatiyanDB {
         (i.category_name_bn && i.category_name_bn.toLowerCase().includes(q))
       );
     }
+    if (filters.start_date) {
+      items = items.filter(i => i.entry_date && i.entry_date >= filters.start_date);
+    }
+    if (filters.end_date) {
+      items = items.filter(i => i.entry_date && i.entry_date <= filters.end_date);
+    }
 
     return items.sort((a, b) => new Date(b.entry_date) - new Date(a.entry_date));
   }

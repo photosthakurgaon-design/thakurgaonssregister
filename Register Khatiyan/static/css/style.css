@@ -241,10 +241,55 @@ select optgroup {
   box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.35) !important;
 }
 
-/* Sidebar Custom Scroll */
+/* Sidebar Custom Scroll & Responsive Drawer / Collapsible */
 #app-sidebar {
   overflow-y: auto;
+  transition: transform 0.3s ease-in-out, opacity 0.2s ease-in-out;
 }
+
+/* Mobile Drawer (< 1024px) */
+@media (max-width: 1023px) {
+  #app-sidebar {
+    transform: translateX(-100%);
+  }
+  #app-sidebar.sidebar-open-mobile {
+    transform: translateX(0) !important;
+  }
+}
+
+/* Desktop Collapsible (>= 1024px) */
+@media (min-width: 1024px) {
+  #app-sidebar {
+    transform: none !important;
+  }
+  #app-sidebar.sidebar-hidden-desktop {
+    display: none !important;
+  }
+}
+
+/* Compact & Auto-Fitting Table Styles */
+.nowrap-cell {
+  white-space: nowrap !important;
+  width: 1% !important;
+}
+
+.table-ledger.compact-ledger {
+  table-layout: auto !important;
+  width: 100% !important;
+}
+
+.table-ledger.compact-ledger th {
+  padding: 8px 6px !important;
+  font-size: 0.82rem !important;
+  letter-spacing: 0 !important;
+}
+
+.table-ledger.compact-ledger td {
+  padding: 5px 6px !important;
+  font-size: 0.85rem !important;
+  line-height: 1.25 !important;
+}
+
 
 
 

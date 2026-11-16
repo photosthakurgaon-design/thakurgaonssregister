@@ -1,4 +1,4 @@
-const CACHE_NAME = 'register-khatiyan-v1';
+const CACHE_NAME = 'register-khatiyan-v4';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

@@ -14,11 +14,18 @@ const App = {
     deferredPrompt: null,
     editingItemId: null,
     editingCategoryId: null,
-    viewMode: 'ledger' // 'ledger' | 'all-table'
+    viewMode: 'ledger', // 'ledger' | 'all-table' | 'date-filter'
+    dateFilter: {
+      startDate: '',
+      endDate: '',
+      categoryId: '',
+      items: []
+    }
   },
 
   // Initialize App
   async init() {
+    this.initSidebarState();
     this.bindEvents();
     this.registerPWA();
     await this.loadInitialData();
@@ -113,6 +120,7 @@ const App = {
     if (pageNum < 1) pageNum = 1;
     if (pageNum > this.state.totalPages) pageNum = this.state.totalPages;
     
+    this.state.viewMode = 'ledger';
     if (updateHash) {
       window.location.hash = `#page-${pageNum}`;
     }
@@ -149,6 +157,24 @@ const App = {
     const indexView = document.getElementById('view-index-page');
     const ledgerView = document.getElementById('view-ledger-page');
     const allRecordsView = document.getElementById('view-all-records');
+    const dateFilterView = document.getElementById('view-date-filter');
+
+    if (this.state.viewMode === 'date-filter') {
+      if (indexView) indexView.classList.add('hidden');
+      if (ledgerView) ledgerView.classList.add('hidden');
+      if (allRecordsView) allRecordsView.classList.add('hidden');
+      if (dateFilterView) dateFilterView.classList.remove('hidden');
+
+      const startInput = document.getElementById('filter-start-date');
+      const endInput = document.getElementById('filter-end-date');
+      if (startInput && this.state.dateFilter.startDate) startInput.value = this.state.dateFilter.startDate;
+      if (endInput && this.state.dateFilter.endDate) endInput.value = this.state.dateFilter.endDate;
+
+      this.loadDateFilteredItems();
+      return;
+    }
+
+    if (dateFilterView) dateFilterView.classList.add('hidden');
 
     if (this.state.viewMode === 'all-table') {
       if (indexView) indexView.classList.add('hidden');
@@ -463,6 +489,247 @@ const App = {
     this.render();
   },
 
+  // Open Date Filter View
+  openDateFilterView() {
+    this.state.viewMode = 'date-filter';
+
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+
+    // Default: 1st of current month to today
+    if (!this.state.dateFilter.startDate) {
+      this.state.dateFilter.startDate = `${yyyy}-${mm}-01`;
+    }
+    if (!this.state.dateFilter.endDate) {
+      this.state.dateFilter.endDate = `${yyyy}-${mm}-${dd}`;
+    }
+
+    this.render();
+    this.closeSidebar();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  },
+
+  // Apply quick date preset
+  setDatePreset(preset) {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const todayStr = `${yyyy}-${mm}-${dd}`;
+
+    let start = '';
+    let end = todayStr;
+
+    if (preset === 'today') {
+      start = todayStr;
+      end = todayStr;
+    } else if (preset === '7days') {
+      const past7 = new Date();
+      past7.setDate(past7.getDate() - 7);
+      start = past7.toISOString().slice(0, 10);
+    } else if (preset === 'this_month') {
+      start = `${yyyy}-${mm}-01`;
+      end = todayStr;
+    } else if (preset === 'last_month') {
+      const prevMonth = new Date(yyyy, today.getMonth() - 1, 1);
+      const prevMonthLast = new Date(yyyy, today.getMonth(), 0);
+      start = prevMonth.toISOString().slice(0, 10);
+      end = prevMonthLast.toISOString().slice(0, 10);
+    } else if (preset === 'this_year') {
+      start = `${yyyy}-01-01`;
+      end = todayStr;
+    } else if (preset === 'all') {
+      start = '';
+      end = '';
+    }
+
+    this.state.dateFilter.startDate = start;
+    this.state.dateFilter.endDate = end;
+
+    const startInput = document.getElementById('filter-start-date');
+    const endInput = document.getElementById('filter-end-date');
+    if (startInput) startInput.value = start;
+    if (endInput) endInput.value = end;
+
+    this.loadDateFilteredItems();
+  },
+
+  // Handle Date Filter Form Submit
+  applyDateFilter(e) {
+    if (e) e.preventDefault();
+    const startInput = document.getElementById('filter-start-date');
+    const endInput = document.getElementById('filter-end-date');
+    const catSelect = document.getElementById('filter-category-select');
+
+    this.state.dateFilter.startDate = startInput ? startInput.value : '';
+    this.state.dateFilter.endDate = endInput ? endInput.value : '';
+    this.state.dateFilter.categoryId = catSelect ? catSelect.value : '';
+
+    this.loadDateFilteredItems();
+  },
+
+  resetDateFilter() {
+    this.setDatePreset('this_month');
+    const catSelect = document.getElementById('filter-category-select');
+    if (catSelect) catSelect.value = '';
+    this.state.dateFilter.categoryId = '';
+    this.loadDateFilteredItems();
+  },
+
+  // Fetch and render date-filtered items
+  async loadDateFilteredItems() {
+    const tableBody = document.getElementById('date-filter-table-body');
+    if (tableBody) {
+      tableBody.innerHTML = `<tr><td colspan="10" class="text-center py-8 text-gray-500 font-semibold">তথ্য লোড হচ্ছে...</td></tr>`;
+    }
+
+    const filters = {};
+    if (this.state.dateFilter.startDate) filters.start_date = this.state.dateFilter.startDate;
+    if (this.state.dateFilter.endDate) filters.end_date = this.state.dateFilter.endDate;
+    if (this.state.dateFilter.categoryId) filters.category_id = this.state.dateFilter.categoryId;
+
+    const items = await window.khatiyanDB.getItems(filters);
+    this.state.dateFilter.items = items;
+
+    this.populateDateFilterCategorySelect();
+    this.renderDateFilterTable(items);
+  },
+
+  populateDateFilterCategorySelect() {
+    const select = document.getElementById('filter-category-select');
+    if (!select || select.children.length > 1) return;
+
+    this.state.categories.forEach(cat => {
+      const opt = document.createElement('option');
+      opt.value = cat.id;
+      opt.textContent = `${cat.icon || '📦'} ${cat.name_bn || cat.name} (পৃষ্ঠা ${cat.page_number})`;
+      select.appendChild(opt);
+    });
+
+    if (this.state.dateFilter.categoryId) {
+      select.value = this.state.dateFilter.categoryId;
+    }
+  },
+
+  // Render Date Filter Table & Stats
+  renderDateFilterTable(items) {
+    const tableBody = document.getElementById('date-filter-table-body');
+    const countEl = document.getElementById('date-filter-count');
+    const totalEl = document.getElementById('date-filter-total');
+    const vouchersEl = document.getElementById('date-filter-vouchers');
+    const footerTotalEl = document.getElementById('date-filter-footer-total');
+    const badgeLabel = document.getElementById('date-filter-active-range-label');
+
+    const totalCost = items.reduce((sum, item) => sum + (Number(item.total_price) || 0), 0);
+    const uniqueVouchers = new Set(items.map(i => i.voucher_no).filter(Boolean)).size;
+
+    if (countEl) countEl.textContent = `${items.length} টি`;
+    if (totalEl) totalEl.textContent = '৳ ' + totalCost.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+    if (vouchersEl) vouchersEl.textContent = `${uniqueVouchers} টি`;
+    if (footerTotalEl) footerTotalEl.textContent = '৳ ' + totalCost.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+
+    const s = this.state.dateFilter.startDate;
+    const e = this.state.dateFilter.endDate;
+    if (badgeLabel) {
+      if (s && e) {
+        badgeLabel.textContent = `${PrintManager.formatDate(s)} হতে ${PrintManager.formatDate(e)}`;
+      } else if (s) {
+        badgeLabel.textContent = `${PrintManager.formatDate(s)} হতে পরবর্তী`;
+      } else if (e) {
+        badgeLabel.textContent = `${PrintManager.formatDate(e)} পর্যন্ত`;
+      } else {
+        badgeLabel.textContent = 'সকল তারিখ';
+      }
+    }
+
+    if (!tableBody) return;
+
+    if (items.length === 0) {
+      tableBody.innerHTML = `
+        <tr>
+          <td colspan="10" class="text-center py-12 text-slate-500">
+            <span class="text-3xl block mb-2">📭</span>
+            উক্ত তারিখের মধ্যে কোনো মালামাল ক্রয়ের এন্ট্রি পাওয়া যায়নি।
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    let rows = '';
+    items.forEach((item, idx) => {
+      const specText = item.specification ? ` <span class="text-xs text-slate-500 font-normal">(${item.specification})</span>` : '';
+      const supplierPart = item.supplier ? `<strong class="text-slate-800">${item.supplier}</strong>` : '';
+      const remarksPart = item.remarks ? `<span class="text-slate-500">${item.supplier ? ' - ' : ''}${item.remarks}</span>` : '';
+      const supplierRemarks = (supplierPart || remarksPart) ? `<div class="text-2xs text-slate-500 mt-0.5">${supplierPart}${remarksPart}</div>` : '';
+
+      rows += `
+        <tr class="hover:bg-teal-50/50 transition">
+          <td class="nowrap-cell text-center font-bold text-slate-600">${idx + 1}</td>
+          <td class="nowrap-cell text-center">
+            <button onclick="App.goToPage(${item.page_number})" class="page-badge cursor-pointer" title="পৃষ্ঠা ${item.page_number} এ যান">
+              পৃষ্ঠা ${item.page_number}
+            </button>
+          </td>
+          <td class="nowrap-cell text-center font-semibold text-slate-700">
+            ${PrintManager.formatDate(item.entry_date)}
+          </td>
+          <td class="text-xs sm:text-sm font-bold text-teal-900">
+            ${item.category_name_bn || item.category_name || '-'}
+          </td>
+          <td class="text-xs sm:text-sm leading-tight">
+            <span class="font-bold text-slate-900">${item.item_name}</span>${specText}
+            ${supplierRemarks}
+          </td>
+          <td class="nowrap-cell text-center font-semibold text-slate-700 text-xs">
+            ${item.voucher_no || '-'}
+          </td>
+          <td class="nowrap-cell text-center font-bold text-slate-800 text-xs">
+            ${item.quantity} ${item.unit || ''}
+          </td>
+          <td class="nowrap-cell text-right font-medium text-slate-700 text-xs">
+            ৳ ${(Number(item.unit_price) || 0).toFixed(2)}
+          </td>
+          <td class="nowrap-cell text-right font-extrabold text-teal-900 text-xs sm:text-sm">
+            ৳ ${(Number(item.total_price) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+          </td>
+          <td class="nowrap-cell text-center space-x-1">
+            <button onclick="App.openEditItemModal(${item.id})" class="px-2 py-1 text-xs text-amber-700 hover:bg-amber-100 rounded border border-amber-300 transition cursor-pointer" title="সম্পাদনা">
+              ✏️
+            </button>
+            <button onclick="App.deleteItem(${item.id})" class="px-2 py-1 text-xs text-red-600 hover:bg-red-100 rounded border border-red-300 transition cursor-pointer" title="মুছে ফেলুন">
+              🗑️
+            </button>
+          </td>
+        </tr>
+      `;
+    });
+
+    tableBody.innerHTML = rows;
+  },
+
+  // Print Date Filter Report
+  printDateFilterReport() {
+    const items = this.state.dateFilter.items || [];
+    const s = this.state.dateFilter.startDate;
+    const e = this.state.dateFilter.endDate;
+    const catSelect = document.getElementById('filter-category-select');
+    const catName = (catSelect && catSelect.selectedIndex > 0) ? catSelect.options[catSelect.selectedIndex].text : '';
+    PrintManager.printDateRangeReport(items, s, e, catName);
+  },
+
+  // Export Date Filter CSV
+  exportDateFilterExcel() {
+    const items = this.state.dateFilter.items || [];
+    if (items.length === 0) {
+      this.showToast('⚠️ এক্সপোর্ট করার মতো কোনো মালামাল নেই');
+      return;
+    }
+    PrintManager.exportCsv(items);
+  },
+
   // Clear Search Input and return to ledger view
   clearSearch() {
     this.state.searchQuery = '';
@@ -474,32 +741,71 @@ const App = {
     this.render();
   },
 
-  // Sidebar Controls (Mobile & Desktop)
-  toggleSidebar() {
-    const sidebar = document.getElementById('app-sidebar');
-    const backdrop = document.getElementById('sidebar-backdrop');
-    if (sidebar) {
-      const isClosed = sidebar.classList.contains('-translate-x-full');
-      if (isClosed) {
-        sidebar.classList.remove('-translate-x-full');
-        sidebar.classList.add('translate-x-0');
-        if (backdrop) backdrop.classList.remove('hidden');
-      } else {
-        sidebar.classList.add('-translate-x-full');
-        sidebar.classList.remove('translate-x-0');
-        if (backdrop) backdrop.classList.add('hidden');
+  // Restore saved desktop sidebar state
+  initSidebarState() {
+    if (window.innerWidth >= 1024) {
+      const isHidden = localStorage.getItem('sidebar_hidden_desktop') === 'true';
+      const sidebar = document.getElementById('app-sidebar');
+      if (sidebar && isHidden) {
+        sidebar.classList.add('sidebar-hidden-desktop');
       }
     }
   },
 
-  closeSidebar() {
+  // Home Button Action - Return to Page 1 (সূচিপত্র) & Reset all views
+  goHome() {
+    this.clearSearch();
+    this.goToPage(1);
+    this.closeSidebar();
+  },
+
+  // Sidebar Controls (Mobile Drawer & Desktop Hide/Unhide)
+  toggleSidebar() {
     const sidebar = document.getElementById('app-sidebar');
     const backdrop = document.getElementById('sidebar-backdrop');
-    if (sidebar && window.innerWidth < 1024) {
-      sidebar.classList.add('-translate-x-full');
-      sidebar.classList.remove('translate-x-0');
+    if (!sidebar) return;
+
+    if (window.innerWidth >= 1024) {
+      // Desktop: Hide/Unhide sidebar
+      const isHidden = sidebar.classList.toggle('sidebar-hidden-desktop');
+      localStorage.setItem('sidebar_hidden_desktop', isHidden ? 'true' : 'false');
+    } else {
+      // Mobile: Drawer open/close
+      const isOpen = sidebar.classList.contains('sidebar-open-mobile');
+      if (isOpen) {
+        this.closeSidebar();
+      } else {
+        this.openSidebar();
+      }
     }
-    if (backdrop) backdrop.classList.add('hidden');
+  },
+
+  openSidebar() {
+    const sidebar = document.getElementById('app-sidebar');
+    const backdrop = document.getElementById('sidebar-backdrop');
+    if (window.innerWidth >= 1024) {
+      if (sidebar) {
+        sidebar.classList.remove('sidebar-hidden-desktop');
+        localStorage.setItem('sidebar_hidden_desktop', 'false');
+      }
+    } else {
+      if (sidebar) sidebar.classList.add('sidebar-open-mobile');
+      if (backdrop) backdrop.classList.remove('hidden');
+    }
+  },
+
+  closeSidebar(forceDesktop = false) {
+    const sidebar = document.getElementById('app-sidebar');
+    const backdrop = document.getElementById('sidebar-backdrop');
+    if (window.innerWidth >= 1024) {
+      if (forceDesktop && sidebar) {
+        sidebar.classList.add('sidebar-hidden-desktop');
+        localStorage.setItem('sidebar_hidden_desktop', 'true');
+      }
+    } else {
+      if (sidebar) sidebar.classList.remove('sidebar-open-mobile');
+      if (backdrop) backdrop.classList.add('hidden');
+    }
   },
 
   // Modal Handlers
@@ -614,8 +920,12 @@ const App = {
 
     this.closeModal('modal-entry');
     await this.loadInitialData();
-    // Navigate straight to the saved page
-    this.goToPage(payload.page_number);
+    if (this.state.viewMode === 'date-filter') {
+      this.loadDateFilteredItems();
+    } else {
+      // Navigate straight to the saved page
+      this.goToPage(payload.page_number);
+    }
   },
 
   async openEditItemModal(itemId) {
@@ -647,7 +957,13 @@ const App = {
       await window.khatiyanDB.deleteItem(itemId);
       this.showToast('🗑️ এন্ট্রি সফলভাবে মুছে ফেলা হয়েছে');
       await this.loadInitialData();
-      this.goToPage(this.state.currentPage);
+      if (this.state.viewMode === 'date-filter') {
+        this.loadDateFilteredItems();
+      } else if (this.state.viewMode === 'all-table') {
+        this.renderAllRecordsTable();
+      } else {
+        this.goToPage(this.state.currentPage);
+      }
     }
   },
 
@@ -830,8 +1146,13 @@ const App = {
   },
 
   // Print Handlers
-  printCurrentView() {
-    if (this.state.currentPage === 1) {
+  async printCurrentView() {
+    if (this.state.viewMode === 'date-filter') {
+      this.printDateFilterReport();
+    } else if (this.state.viewMode === 'all-table') {
+      const items = await window.khatiyanDB.getItems({ search: this.state.searchQuery });
+      PrintManager.printAllRecords(items, this.state.searchQuery);
+    } else if (this.state.currentPage === 1) {
       PrintManager.printMasterIndex(this.state.categories);
     } else {
       PrintManager.printCurrentPage(
