@@ -93,6 +93,9 @@ const App = {
   // Load Categories & Summary
   async loadInitialData() {
     try {
+      // Auto-rehydrate server if server restarted with older container
+      await window.khatiyanDB.checkAndSyncServer();
+
       this.state.categories = await window.khatiyanDB.getCategories();
       this.state.summary = await window.khatiyanDB.getSummary();
       this.populatePageSelector();
@@ -264,16 +267,18 @@ const App = {
             <td class="text-right font-bold text-emerald-800">
               ৳ ${(Number(cat.total_amount) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
             </td>
-            <td class="text-center space-x-1">
-              <button onclick="App.goToPage(${cat.page_number})" class="px-2.5 py-1 text-xs font-semibold text-white bg-teal-700 hover:bg-teal-800 rounded shadow-sm inline-flex items-center gap-1">
-                <span>পৃষ্ঠা খুলুন</span> ➔
-              </button>
-              <button onclick="App.openNewEntryModal(${cat.id}, ${cat.page_number})" class="px-2 py-1 text-xs text-emerald-700 hover:bg-emerald-100 rounded border border-emerald-300" title="এই ক্যাটাগরিতে নতুন এন্ট্রি">
-                ➕ এন্ট্রি
-              </button>
-              <button onclick="App.openCategoryModal(${cat.id})" class="px-2 py-1 text-xs text-gray-600 hover:bg-gray-100 rounded border border-gray-300" title="সম্পাদনা">
-                ✏️
-              </button>
+            <td class="text-center py-2 px-2 align-middle">
+              <div class="inline-flex flex-col items-center justify-center gap-1.5 w-24 mx-auto">
+                <button onclick="App.goToPage(${cat.page_number})" class="w-full h-7 px-1.5 text-xs font-bold text-white bg-teal-700 hover:bg-teal-800 rounded-lg shadow-xs flex items-center justify-center gap-1 transition cursor-pointer" title="এই পৃষ্ঠা খুলুন">
+                  <span>পৃষ্ঠা খুলুন</span> ➔
+                </button>
+                <button onclick="App.openNewEntryModal(${cat.id}, ${cat.page_number})" class="w-full h-7 px-1.5 text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 rounded-lg border border-emerald-400 shadow-xs flex items-center justify-center gap-1 transition cursor-pointer" title="এই ক্যাটাগরিতে নতুন এন্ট্রি দিন">
+                  <span>➕ এন্ট্রি</span>
+                </button>
+                <button onclick="App.openCategoryModal(${cat.id})" class="w-full h-7 px-1.5 text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 rounded-lg border border-slate-300 shadow-xs flex items-center justify-center gap-1 transition cursor-pointer" title="ক্যাটাগরি সম্পাদনা করুন">
+                  <span>✏️ এডিট</span>
+                </button>
+              </div>
             </td>
           </tr>
         `;
@@ -1229,6 +1234,7 @@ const App = {
           for (const item of data.items) {
             await window.khatiyanDB.putToStore('items', item);
           }
+          await window.khatiyanDB.saveLocalSnapshot();
 
           this.showToast(`✅ ব্যাকআপ সফলভাবে রিস্টোর হয়েছে (${itemCount} টি মালামাল)!`);
           this.closeModal('modal-backup');

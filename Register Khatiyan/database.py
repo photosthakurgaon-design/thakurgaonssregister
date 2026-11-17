@@ -60,11 +60,14 @@ def init_db():
     )
     ''')
     
-    # Check if categories table is empty, if so seed initial categories and sample entries
+    # Check if DB has been initialized before
+    cursor.execute("SELECT value FROM settings WHERE key = 'db_initialized'")
+    init_flag = cursor.fetchone()
+    
     cursor.execute('SELECT COUNT(*) as count FROM categories')
     cat_count = cursor.fetchone()['count']
     
-    if cat_count == 0:
+    if not init_flag and cat_count == 0:
         seed_categories = [
             (
                 "Stationery Items", 
@@ -174,6 +177,7 @@ def init_db():
         cursor.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('total_pages', '250')")
         cursor.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('currency', '৳')")
         cursor.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('admin_pin', '1234')")
+        cursor.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('db_initialized', '1')")
         
     conn.commit()
     conn.close()
@@ -532,6 +536,19 @@ def verify_admin_pin(pin):
         return False
     current_pin = get_admin_pin()
     return str(pin).strip() == current_pin
+
+def get_db_status():
+    conn = get_db_connection()
+    summary = get_summary()
+    last_item = conn.execute('SELECT MAX(id) as max_id, MAX(updated_at) as last_updated, COUNT(*) as count FROM items').fetchone()
+    conn.close()
+    return {
+        'total_items': summary.get('total_items', 0),
+        'total_categories': summary.get('total_categories', 0),
+        'max_item_id': last_item['max_id'] if last_item and last_item['max_id'] else 0,
+        'last_updated': last_item['last_updated'] if last_item and last_item['last_updated'] else '',
+        'total_cost': summary.get('total_cost', 0)
+    }
 
 # Auto-initialize DB on import
 init_db()

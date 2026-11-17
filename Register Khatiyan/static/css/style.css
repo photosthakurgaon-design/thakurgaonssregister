@@ -15,8 +15,11 @@
   --accent-gold: #f59e0b;
 }
 
+*, body, input, textarea, select, button, table, th, td {
+  font-family: 'Tiro Bangla', 'Noto Serif Bengali', serif !important;
+}
+
 body {
-  font-family: 'Hind Siliguri', 'Noto Sans Bengali', system-ui, -apple-system, sans-serif;
   background-color: #f1f5f9;
   color: #1e293b;
   -webkit-font-smoothing: antialiased;

@@ -16,10 +16,16 @@ class KhatiyanDB {
   async init() {
     // 1. Check if server API is reachable
     try {
-      const res = await fetch('/api/summary', { signal: AbortSignal.timeout(2000) });
+      const res = await fetch('/api/summary?_t=' + Date.now(), { 
+        cache: 'no-store',
+        signal: AbortSignal.timeout(3500) 
+      });
       if (res.ok) {
-        this.serverOnline = true;
-        console.log('✅ Connected to Python Server API');
+        const data = await res.json();
+        if (data && !data.offline) {
+          this.serverOnline = true;
+          console.log('✅ Connected to Python Server API');
+        }
       }
     } catch (e) {
       this.serverOnline = false;
@@ -182,20 +188,81 @@ class KhatiyanDB {
     }
   }
 
+  async saveLocalSnapshot() {
+    try {
+      const cats = await this.getAllFromStore('categories');
+      const items = await this.getAllFromStore('items');
+      if (items.length > 0 || cats.length > 0) {
+        const snapshot = {
+          app: 'ডিজিটাল খতিয়ান - মালামাল ক্রয় রেজিস্টার খাতা',
+          version: '1.0',
+          export_time: new Date().toISOString(),
+          timestamp: Date.now(),
+          categories: cats,
+          items: items
+        };
+        localStorage.setItem('khatiyan_auto_snapshot', JSON.stringify(snapshot));
+        localStorage.setItem('khatiyan_snapshot_count', String(items.length));
+        localStorage.setItem('khatiyan_snapshot_time', String(Date.now()));
+      }
+    } catch (e) {
+      console.warn('Could not save snapshot:', e);
+    }
+  }
+
+  async checkAndSyncServer() {
+    await this.initPromise;
+    if (!this.serverOnline) return false;
+
+    try {
+      const res = await fetch('/api/db-status?_t=' + Date.now(), { cache: 'no-store' });
+      if (!res.ok) return false;
+      const status = await res.json();
+
+      const raw = localStorage.getItem('khatiyan_auto_snapshot');
+      if (!raw) return false;
+      const snapshot = JSON.parse(raw);
+      const clientItems = snapshot.items || [];
+      const clientCount = clientItems.length;
+      const serverCount = status.total_items || 0;
+
+      // If client has items, but server was restarted / wiped or has fewer items
+      if (clientCount > 0 && (serverCount < clientCount || status.max_item_id === 0)) {
+        console.warn(`[Auto-Sync] Server database has ${serverCount} items, but client local snapshot has ${clientCount} items. Re-hydrating server...`);
+        const restoreRes = await fetch('/api/restore', {
+          method: 'POST',
+          headers: this.getAuthHeaders(),
+          body: JSON.stringify(snapshot)
+        });
+        if (restoreRes.ok) {
+          console.log('[Auto-Sync] ✅ Server restored from local client snapshot successfully!');
+          return true;
+        }
+      }
+    } catch (e) {
+      console.warn('Sync check failed:', e);
+    }
+    return false;
+  }
+
   // ------------------ High Level APIs ------------------
 
   async getCategories() {
     await this.initPromise;
     if (this.serverOnline) {
       try {
-        const res = await fetch('/api/categories');
+        const res = await fetch('/api/categories?_t=' + Date.now(), { cache: 'no-store' });
         if (res.ok) {
           const data = await res.json();
-          // Cache to IDB
-          for (const item of data) {
-            await this.putToStore('categories', item);
+          if (Array.isArray(data) && data.length > 0) {
+            // Full sync to IDB: clear and replace so deleted categories don't persist
+            await this.clearStore('categories');
+            for (const item of data) {
+              await this.putToStore('categories', item);
+            }
+            await this.saveLocalSnapshot();
+            return data;
           }
-          return data;
         }
       } catch (e) {
         this.serverOnline = false;
@@ -232,6 +299,7 @@ class KhatiyanDB {
         }
         if (result.id) {
           await this.putToStore('categories', { ...data, id: result.id });
+          await this.saveLocalSnapshot();
         }
         return result;
       } catch (e) {
@@ -243,6 +311,7 @@ class KhatiyanDB {
     const id = Date.now();
     const newCat = { ...data, id, page_number: Number(data.page_number) || 1 };
     await this.putToStore('categories', newCat);
+    await this.saveLocalSnapshot();
     return { success: true, id, message: 'ক্যাটাগরি লোকালি সংরক্ষিত হয়েছে' };
   }
 
@@ -260,6 +329,7 @@ class KhatiyanDB {
           return { success: false, error: result.error || 'ক্যাটাগরি আপডেট ব্যর্থ হয়েছে', status: res.status };
         }
         await this.putToStore('categories', { ...data, id: Number(id) });
+        await this.saveLocalSnapshot();
         return result;
       } catch (e) {
         this.serverOnline = false;
@@ -268,6 +338,7 @@ class KhatiyanDB {
 
     const updated = { ...data, id: Number(id), page_number: Number(data.page_number) || 1 };
     await this.putToStore('categories', updated);
+    await this.saveLocalSnapshot();
     return { success: true };
   }
 
@@ -284,6 +355,7 @@ class KhatiyanDB {
           return { success: false, error: result.error || 'ক্যাটাগরি মুছে ফেলা ব্যর্থ হয়েছে', status: res.status };
         }
         await this.deleteFromStore('categories', Number(id));
+        await this.saveLocalSnapshot();
         return result;
       } catch (e) {
         this.serverOnline = false;
@@ -291,6 +363,7 @@ class KhatiyanDB {
     }
 
     await this.deleteFromStore('categories', Number(id));
+    await this.saveLocalSnapshot();
     return { success: true };
   }
 
@@ -298,8 +371,18 @@ class KhatiyanDB {
     await this.initPromise;
     if (this.serverOnline) {
       try {
-        const res = await fetch(`/api/page/${pageNumber}`);
-        if (res.ok) return await res.json();
+        const res = await fetch(`/api/page/${pageNumber}?_t=` + Date.now(), { cache: 'no-store' });
+        if (res.ok) {
+          const pageData = await res.json();
+          if (pageData && !pageData.offline) {
+            if (Array.isArray(pageData.items)) {
+              for (const it of pageData.items) {
+                await this.putToStore('items', it);
+              }
+            }
+            return pageData;
+          }
+        }
       } catch (e) {
         this.serverOnline = false;
       }
@@ -334,17 +417,22 @@ class KhatiyanDB {
         if (filters.search) params.append('search', filters.search);
         if (filters.start_date) params.append('start_date', filters.start_date);
         if (filters.end_date) params.append('end_date', filters.end_date);
+        params.append('_t', Date.now());
 
-        const res = await fetch(`/api/items?${params.toString()}`);
+        const res = await fetch(`/api/items?${params.toString()}`, { cache: 'no-store' });
         if (res.ok) {
           const items = await res.json();
-          // Caching to IDB if full list is fetched
-          if (!filters.category_id && !filters.page_number && !filters.search && !filters.start_date && !filters.end_date) {
-            for (const item of items) {
-              await this.putToStore('items', item);
+          if (Array.isArray(items)) {
+            // Caching to IDB if full list is fetched: clear and replace so deleted items are removed
+            if (!filters.category_id && !filters.page_number && !filters.search && !filters.start_date && !filters.end_date) {
+              await this.clearStore('items');
+              for (const item of items) {
+                await this.putToStore('items', item);
+              }
+              await this.saveLocalSnapshot();
             }
+            return items;
           }
-          return items;
         }
       } catch (e) {
         this.serverOnline = false;
@@ -414,6 +502,7 @@ class KhatiyanDB {
           created_at: new Date().toISOString()
         };
         await this.putToStore('items', savedItem);
+        await this.saveLocalSnapshot();
         return result;
       } catch (e) {
         this.serverOnline = false;
@@ -437,6 +526,7 @@ class KhatiyanDB {
     };
 
     await this.putToStore('items', newItem);
+    await this.saveLocalSnapshot();
     return { success: true, id, message: 'নতুন মালামাল লোকালি এন্ট্রি হয়েছে' };
   }
 
@@ -463,6 +553,7 @@ class KhatiyanDB {
           category_id: Number(data.category_id) || 1
         };
         await this.putToStore('items', updated);
+        await this.saveLocalSnapshot();
         return result;
       } catch (e) {
         this.serverOnline = false;
@@ -484,6 +575,7 @@ class KhatiyanDB {
     };
 
     await this.putToStore('items', updated);
+    await this.saveLocalSnapshot();
     return { success: true };
   }
 
@@ -500,6 +592,7 @@ class KhatiyanDB {
           return { success: false, error: result.error || 'এন্ট্রি ডিলিট ব্যর্থ হয়েছে', status: res.status };
         }
         await this.deleteFromStore('items', Number(id));
+        await this.saveLocalSnapshot();
         return result;
       } catch (e) {
         this.serverOnline = false;
@@ -507,6 +600,7 @@ class KhatiyanDB {
     }
 
     await this.deleteFromStore('items', Number(id));
+    await this.saveLocalSnapshot();
     return { success: true };
   }
 
@@ -514,8 +608,11 @@ class KhatiyanDB {
     await this.initPromise;
     if (this.serverOnline) {
       try {
-        const res = await fetch('/api/summary');
-        if (res.ok) return await res.json();
+        const res = await fetch('/api/summary?_t=' + Date.now(), { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data && !data.offline) return data;
+        }
       } catch (e) {
         this.serverOnline = false;
       }

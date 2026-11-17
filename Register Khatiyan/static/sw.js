@@ -1,4 +1,4 @@
-const CACHE_NAME = 'register-khatiyan-v5';
+const CACHE_NAME = 'register-khatiyan-v7';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -44,14 +44,15 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const requestUrl = new URL(event.request.url);
 
-  // If request is for an API endpoint, try network first, then return offline JSON if available
+  // If request is for an API endpoint, try network first, then return 503 offline JSON if unavailable
   if (requestUrl.pathname.startsWith('/api/')) {
     event.respondWith(
       fetch(event.request).catch(() => {
         return new Response(JSON.stringify({ 
           offline: true, 
-          message: 'Currently offline. Using local device storage.' 
+          error: 'Network currently unreachable. Using offline device storage.' 
         }), {
+          status: 503,
           headers: { 'Content-Type': 'application/json' }
         });
       })
